@@ -207,6 +207,21 @@
   .buyer-site .quantity input {
     @apply px-2;
   }
+  .buyer-site .menu-item.dish {
+    @apply flex-col gap-3;
+  }
+  .buyer-site .size-list {
+    @apply grid gap-3;
+  }
+  .buyer-site .size-list li {
+    @apply flex items-center gap-4;
+  }
+  .buyer-site .size-name {
+    @apply min-w-16 text-body-sm font-medium;
+  }
+  .buyer-site .size-list .quantity {
+    @apply ml-auto;
+  }
   .buyer-site .receipt {
     @apply md:sticky md:top-8;
   }

@@ -27,6 +27,9 @@ export const menuSchema: z.ZodType<ShopMenu> = z
         category: z.string().nullable(),
         priceCents: cents,
         agentPriceCents: cents,
+        // Optional sizes from Track A: "Salad (Half)" has baseName "Salad", sizeLabel "Half".
+        baseName: z.string().min(1).nullable().optional(),
+        sizeLabel: z.string().min(1).nullable().optional(),
       }),
     ),
   })

@@ -27,10 +27,24 @@ test("storefront works without JavaScript and never enables unconnected payment"
   await expect(
     page.getByRole("spinbutton", { name: "Quantity for Croissant" }),
   ).toHaveCount(0);
+  // Sizes of one dish appear under one heading, each with its own quantity.
+  await expect(
+    page.getByRole("heading", { name: "Asian Chicken Salad", exact: true }),
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole("list", { name: "Sizes of Asian Chicken Salad" }),
+  ).toContainText("Half");
+  await page
+    .getByRole("spinbutton", {
+      name: "Quantity for Asian Chicken Salad (Full)",
+      exact: true,
+    })
+    .fill("1");
   await page.getByRole("button", { name: "Update order total" }).click();
   await expect(
-    page.getByRole("button", { name: "Pay $12.83 from wallet" }),
+    page.getByRole("button", { name: "Pay $26.13 from wallet" }),
   ).toBeDisabled();
+  await expect(page.getByText("1 × Asian Chicken Salad (Full)")).toBeVisible();
   await expect(page.getByText("2 × Oat latte")).toBeVisible();
   await expect(
     page.locator('head link[rel="alternate"][type="application/json"]'),
@@ -104,6 +118,7 @@ test("MCP supports initialization, tool discovery, and a read-only menu request"
   });
   expect(menu.ok()).toBe(true);
   expect(await menu.text()).toContain("Oat latte");
+  expect(await menu.text()).toContain("sizeLabel");
   const order = await call(4, "tools/call", {
     name: "place_order",
     arguments: {
