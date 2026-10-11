@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f3f6f5;
+  --color-line: #dce4e2;
+  --color-ink: #0b1f1c;
+  --color-ink-muted: #4d5f5b;
+  --color-accent: #00bca8;
+  --color-accent-ink: #008577;
+  --color-on-accent: #0b1f1c;
+  --color-accent-wash: #e3f8f5;
+  --color-danger: #b42318;
+
+  --font-display: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-cooper-hewitt), ui-sans-serif, system-ui, sans-serif;
+
+  --text-display-xl: 4.5rem;
+  --text-display-xl--line-height: 1.02;
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.08;
+  --text-title: 1.5rem;
+  --text-title--line-height: 1.2;
+  --text-body-lg: 1.1875rem;
+  --text-body-lg--line-height: 1.5;
+  --text-body: 1rem;
+  --text-body--line-height: 1.55;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.45;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.4;
+
+  --radius-control: 0.75rem;
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgb(11 31 28 / 0.06), 0 8px 24px -12px rgb(11 31 28 / 0.18);
+  --shadow-raised: 0 2px 4px rgb(11 31 28 / 0.06), 0 24px 48px -20px rgb(11 31 28 / 0.28);
+  --shadow-ring: 0 0 0 1px rgb(11 31 28 / 0.08);
+  --shadow-accent-glow: 0 0 0 6px rgb(0 188 168 / 0.18);
+
+  --ease-out-soft: cubic-bezier(0.2, 0, 0, 1);
+
+  --animate-ticket-in: ticket-in 520ms var(--ease-out-soft) both;
+  --animate-pulse-ring: pulse-ring 1600ms var(--ease-out-soft) infinite;
+
+  @keyframes ticket-in {
+    from {
+      opacity: 0;
+      translate: 0 -12px;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgb(0 188 168 / 0.45);
+    }
+    100% {
+      box-shadow: 0 0 0 14px rgb(0 188 168 / 0);
+    }
+  }
+}
+
+@utility ticket-edge {
+  --ticket-tooth: 10px;
+  mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--ticket-tooth) 51% repeat-x,
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / var(--ticket-tooth) 51% repeat-x;
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  html {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--color-accent-wash);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent-ink);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+    }
+  }
+}
