@@ -1,22 +1,53 @@
+import { CaretDown } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
 import { AgentOrderExample } from "@/components/merchant/AgentOrderExample";
 import { FeeTicket } from "@/components/merchant/FeeTicket";
+import { HeroCard } from "@/components/merchant/hero/HeroCard";
 import { ImportForm } from "@/components/merchant/ImportForm";
-import { HomeLogo } from "@/components/ui/Logo";
+import { Logo } from "@/components/ui/Logo";
+
+const HERO_LINK =
+  "inline-flex h-10 items-center rounded-control px-4 text-body-sm font-semibold text-ink transition-[background-color] duration-150 hover:bg-surface-sunken";
 
 export default function Home() {
   return (
-    <div>
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <HomeLogo />
-      </header>
-      <main className="mx-auto flex max-w-6xl flex-col gap-32 px-6 pt-8 pb-32">
-        <section className="grid items-center gap-16 lg:layout-hero">
-          <div className="flex flex-col gap-8">
-            <h1 className="text-display font-bold sm:text-display-xl">Sell to AI agents and keep the card fee.</h1>
-            <p className="max-w-xl text-body-lg text-ink-muted">
-              Paste your website and we&rsquo;ll build a storefront that assistants like Instinct can order from. They pay in AUSD. You withdraw to your bank once a week.
-            </p>
+    <>
+      <section className="relative isolate flex min-h-svh flex-col overflow-hidden">
+        <HeroCard />
+        <nav aria-label="For customers" className="mx-auto flex w-full max-w-6xl justify-end gap-2 px-6 pt-6">
+          <Link href="/shops" className={HERO_LINK}>
+            Order from a shop
+          </Link>
+          <Link href="/signup" className={`${HERO_LINK} bg-surface-sunken`}>
+            Sign up to order
+          </Link>
+        </nav>
+        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-end gap-10 px-6 pt-56 pb-12 lg:justify-center lg:pt-8">
+          <div className="flex max-w-xl flex-col gap-6">
+            <h1>
+              <Logo className="h-auto w-full max-w-sm sm:h-16 sm:w-auto sm:max-w-none" />
+            </h1>
+            <p className="font-display text-title font-bold">We cut card fees out of small-business orders by letting AI agents pay directly.</p>
             <ImportForm />
+          </div>
+        </div>
+        <a
+          href="#card-fees"
+          aria-label="See what card fees cost a shop"
+          className="mx-auto mb-6 flex size-12 items-center justify-center rounded-pill text-ink transition-[background-color] duration-150 hover:bg-surface-sunken"
+        >
+          <CaretDown size={32} weight="bold" aria-hidden />
+        </a>
+      </section>
+      <main className="mx-auto flex max-w-6xl flex-col gap-32 px-6 py-32">
+        <section id="card-fees" aria-labelledby="card-fees-heading" className="grid items-center gap-16 lg:layout-hero">
+          <div className="flex flex-col gap-6">
+            <h2 id="card-fees-heading" className="text-display font-bold">
+              What a card costs on one order
+            </h2>
+            <p className="max-w-xl text-body-lg text-ink-muted">
+              Stripe charges 2.9% plus 30¢ on every online card payment. The fixed 30¢ is why small orders lose the most. Drag the price to see it.
+            </p>
           </div>
           <div className="flex justify-center lg:justify-end">
             <FeeTicket />
@@ -24,6 +55,6 @@ export default function Home() {
         </section>
         <AgentOrderExample />
       </main>
-    </div>
+    </>
   );
 }
