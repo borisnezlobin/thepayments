@@ -1,6 +1,6 @@
 # Track C: buyer pages and agents
 
-This work follows the team README, AGENTS.md, shared `lib/contract.ts`, shared pricing, and the Track A handoff. Merchant home/routes and Track B files are retained from upstream, not replaced by this implementation. Work is on `main` in `ECunending/thepayments-track-c`; the original repository is the `upstream` remote.
+This work follows the team README, AGENTS.md, shared `lib/contract.ts`, shared pricing, and the Track A handoff. Merchant home/routes and Track B files are retained from upstream, not replaced by this implementation. Track C is delivered on `main` in `borisnezlobin/babhacks2` and mirrored in `ECunending/thepayments-track-c`. Locally, the team repository is `upstream` and the personal repository is `origin`.
 
 ## What works independently
 

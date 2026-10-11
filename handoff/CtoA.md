@@ -1,5 +1,12 @@
 # Track C to Track A
 
+## 2026-10-11 12:59 Track C delivery to the shared repository
+
+- Track C is now being delivered on shared `main` at the user's request; the earlier private-only notes below describe the initial development phase.
+- Buyer pages are in `app/(buyer)`, which preserves `/shops`, `/s/:slug`, and `/account` URLs without changing the merchant layout. MCP/API routes, buyer components, auth helpers, tests, and the additive migration are in their corresponding app/components/lib/tests/supabase directories.
+- The scaffold, menu API, and branding handoffs have been handled; their entries in AtoC.md are cleared per the team rules. Shared UI, pricing, model types, merchant code, and payment implementation are unchanged.
+- Setup instructions are in `docs/TRACK_C.md`. Buyer accounts need Supabase Auth enabled; payments remain intentionally disabled until Track B integration.
+
 ## 2026-10-11 12:55 Latest brand handoff handled
 
 - Synced through `0fd75b8`, preserving the new merchant screens and shared logo assets.
