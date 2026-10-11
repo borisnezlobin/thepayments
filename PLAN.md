@@ -77,7 +77,7 @@ flowchart LR
   end
   subgraph A["Track A: merchant side"]
     import["Import and publish<br/>menu from one URL"]
-    inbox["Order inbox<br/>live over Supabase Realtime"]
+    inbox["Order inbox<br/>live, polls every 2 s"]
     savings["Savings and withdraw<br/>versus Stripe, one click"]
   end
   storefront --> endpoint
@@ -94,7 +94,7 @@ Track C hands every payment to Track B's x402 endpoint, and Track B tells Track 
 
 All three of us agree on these models and endpoints in the first hour, commit them as TypeScript types, and then build against them independently. Until a real endpoint lands, each track works against stubs that return these shapes.
 
-**Stack:** one Next.js app (App Router, TypeScript, Tailwind) on Vercel, with Supabase Postgres for data and Supabase Realtime for live order updates. The chain code lives in `lib/payments`, owned by Track B. The MCP server lives in the same app at /mcp.
+**Stack:** one Next.js app (App Router, TypeScript, Tailwind) on Vercel, with Supabase Postgres for data. Only the server talks to the database, using the secret key. Row-level security is on with no public policies, so the browser never reads tables directly. The chain code lives in `lib/payments`, owned by Track B. The MCP server lives in the same app at /mcp.
 
 **Models** (money is stored in integer cents and converted to token units only inside `lib/payments`):
 
@@ -103,7 +103,7 @@ All three of us agree on these models and endpoints in the first hour, commit th
 | Shop | id, slug, name, sourceUrl, walletAddress, agentDiscountPct, status (draft, live) |
 | Product | id, shopId, name, description, priceCents, imageUrl, available |
 | Buyer | id, email, walletAddress |
-| Order | id, shopId, buyerId, items [{productId, qty}], subtotalCents, discountCents, totalCents, status (awaiting_payment, paid, ready, picked_up), chain, txHash, createdAt |
+| Order | id, shopId, buyerId, pickupName, items [{productId, name, qty, unitPriceCents}], subtotalCents, discountCents, totalCents, status (awaiting_payment, paid, ready, picked_up), chain, txHash, createdAt, paidAt |
 | Withdrawal | id, shopId, amountCents, txHash, status, createdAt |
 
 **Endpoints:**
@@ -120,7 +120,9 @@ All three of us agree on these models and endpoints in the first hour, commit th
 | `GET /api/shops/:slug/balance` and `POST /api/shops/:slug/withdraw` | Merchant dashboard | B |
 | `/mcp`: MCP tools over Streamable HTTP; a browser gets a page explaining how to connect | Claude, Cursor, any MCP client | C |
 
-`lib/payments` exports `createWallet()`, `getBalance(address)`, `payX402(buyerWallet, url, body)`, `withdraw(shop, amount)` and `explorerUrl(txHash)`. Tracks A and C only ever call these, never the chain directly.
+Shop edits need the shop's admin token in the `x-shop-token` header. The token is created at import and lives in `shop_secrets`, which nothing public can read.
+
+`lib/payments` exports `createWallet()`, `getBalance(shop)`, `payX402(buyerWallet, url, body)`, `withdraw(shop, amount)` and `explorerUrl(txHash)`. Tracks A and C only ever call these, never the chain directly.
 
 ## Track A: merchant side
 
@@ -128,7 +130,7 @@ Track A owns everything the shop owner sees: import from a URL, review the menu,
 
 - [ ] **Import.** `POST /api/shops/import` calls Context.dev's scrape and structured-extract endpoints with a JSON schema for menu items (name, description, price, image). It saves a draft shop and its products. When a site has no prices, the import says so instead of guessing.
 - [ ] **Review and publish.** An editable menu table where the owner fixes names and prices, sets the agent discount (default 5%), and publishes. Publishing creates the shop's wallet through `lib/payments.createWallet()`.
-- [ ] **Order inbox.** A live list of paid orders over Supabase Realtime, with a sound and a big "new order" state, so a barista can leave it open on a tablet. Buttons move an order to ready, then picked up. Without this, the shop never learns an agent ordered.
+- [ ] **Order inbox.** A live list of paid orders that polls every 2 seconds, with a sound and a big "new order" state, so a barista can leave it open on a tablet. Buttons move an order to ready, then picked up. Without this, the shop never learns an agent ordered.
 - [ ] **Savings panel.** This week's sales, what Stripe and Square would have charged for the same orders, and the difference. It's computed from real orders, not hard-coded.
 - [ ] **Withdraw.** A one-click button that calls `withdraw()`, then shows the amount, the transaction link and the bank step (see the demo section for what is stubbed).
 - [ ] **Public endpoints.** `GET /api/shops` and `GET /api/shops/:slug/menu`, with agent prices already discounted.
