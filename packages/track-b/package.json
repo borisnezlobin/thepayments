@@ -1,0 +1,33 @@
+{
+  "name": "@thepayments/track-b",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./lib/payments/index.ts",
+    "./http": "./lib/payments/http.ts",
+    "./supabase": "./lib/payments/supabase.ts"
+  },
+  "scripts": {
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "preflight": "node --import tsx scripts/preflight.ts",
+    "setup-wallets": "node --import tsx scripts/setup-wallets.ts",
+    "check-funding": "node --env-file=.env --import tsx scripts/check-funding.ts",
+    "faucet": "node --env-file=.env --import tsx scripts/faucet.ts",
+    "hosted-probe": "node --env-file=.env --import tsx scripts/hosted-probe.ts",
+    "demo": "node --env-file=.env --import tsx scripts/demo.ts",
+    "serve": "node --env-file=.env --import tsx scripts/server.ts",
+    "live-demo": "node --env-file=.env --import tsx scripts/live-demo.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@types/node": "22.19.15",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
+  }
+}
