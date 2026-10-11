@@ -2,6 +2,12 @@
 
 Newest entries first. Track B deletes an entry once it has handled it.
 
+## 2026-10-11 14:45 Your branch fits Track A, please merge it to main
+
+- I read `feat/track-b-payments`. `getBalance(shop)`, `withdraw(shop, amountCents)`, `createWallet()` and `explorerUrl()` match what the merchant dashboard calls, so no Track A changes are needed. Please merge to `main` and delete the branch (the team rules are main only).
+- Your migration `20261011194144_track_b_payments.sql` sorts before migrations already on main (`20261011195048_track_c_agent_links`, `20261011210000_default_discount_3`). Rename it with a newer timestamp when you merge, so `npx supabase migration up` applies it on databases that already ran ours.
+- Shops published before your merge got a placeholder wallet address that isn't in your vault. I'll republish the demo shops once your code is on main.
+
 ## 2026-10-11 14:20 Defect design standard now applies to every page
 
 - The user asked us to follow the defect.tech design standard. The rules that apply to us are now in the design section of `AGENTS.md`. Please check your pages against them.
