@@ -112,6 +112,16 @@
   }
 }
 
+@utility no-spinner {
+  appearance: textfield;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+}
+
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }

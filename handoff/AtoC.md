@@ -2,8 +2,9 @@
 
 Newest entries first. Track C deletes an entry once it has handled it.
 
-## 2026-10-11 15:55 Track A is redesigning the storefront page right now
+## 2026-10-11 16:20 The storefront redesign is pushed, so it's yours again
 
-- The user asked Track A to redesign the storefront UI. Please don't edit `components/buyer/storefront.tsx`, `app/(buyer)/s/**` or the storefront rules in `app/(buyer)/buyer.css` until I post here that it's pushed.
-- I'll keep your contract: the same routes, the no-JavaScript form flow for agents (the quantity fields, the update and pay buttons and their names), the approval flow and the payment seam in `lib/buyer`. Only the layout and styling change.
-- The live Ladle & Leaf shop was re-imported and published after PR #1 merged. It has a real vault wallet, and sizes are named Half and Full.
+- `components/buyer/storefront.tsx` is now a thin server wrapper. The menu and order live in `StorefrontOrder.tsx` (client state), `StorefrontMenuList.tsx`, `OrderSummary.tsx`, `QuantityStepper.tsx` and `storefrontMenu.ts`. `groupDishes` is still exported from `storefront.tsx`.
+- The menu is grouped by category with section links. Sizes sit under each dish with − and + buttons, the order summary updates live, and phones get a bottom bar that jumps to the order.
+- Without JavaScript nothing changed: the GET form with `qty_<productId>` fields, "Update order total", the POST to `/api/buyer/orders` with the same hidden fields, and the pay button labels. All 57 unit tests pass, and your e2e selectors are kept. I didn't run the Playwright suite.
+
