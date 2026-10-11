@@ -55,14 +55,24 @@ export default async function RequestPage({
   const request = await getRequest(principal.buyerId, id);
   if (!request) notFound();
   const { title, body } = message(request);
-  const waiting = request.status === "pending" && !isExpired(request);
+  const waiting =
+    (request.status === "pending" && !isExpired(request)) ||
+    request.status === "approved";
   return (
     <div className="page narrow">
       {waiting && <meta httpEquiv="refresh" content="5" />}
       <StatusPanel
         title={title}
-        href={`/s/${request.shopSlug}`}
-        action={`Back to ${request.shopName}`}
+        href={
+          request.status === "paid" && request.orderId
+            ? `/orders/${request.orderId}`
+            : `/s/${request.shopSlug}`
+        }
+        action={
+          request.status === "paid" && request.orderId
+            ? "View paid receipt"
+            : `Back to ${request.shopName}`
+        }
       >
         <p role="status">{body}</p>
         <ul className="receipt-items">

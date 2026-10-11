@@ -1,3 +1,4 @@
+import { isActiveGrant } from "@/lib/buyer/tokens";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   token: "",
@@ -68,4 +69,17 @@ describe("agent privilege boundary", () => {
     );
     expect(state.userCalls).toBe(0);
   });
+});
+
+it("caps agent grants at one hour even for legacy long-lived rows", () => {
+  const now = Date.now();
+  expect(
+    isActiveGrant(
+      {
+        expires_at: new Date(now + 86400000).toISOString(),
+        created_at: new Date(now - 3600001).toISOString(),
+      },
+      now,
+    ),
+  ).toBe(false);
 });

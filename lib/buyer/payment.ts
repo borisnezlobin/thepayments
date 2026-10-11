@@ -1,16 +1,29 @@
 import "server-only";
 import type { Order } from "@/lib/contract";
-import { IntegrationUnavailable } from "@/lib/errors";
-import type { ApprovalRequest } from "./approvals";
-
-// Track C's single payment seam for an order the buyer has approved.
-// Deliberately disabled: no simulated balances, orders, hashes, or settlement.
-// Connect Track B's payX402 here ONLY after agreeing the wallet and retry
-// contract. Pass request.idempotencyKey through so a retry never charges twice.
-export const checkoutEnabled = false;
+import { appOrigin } from "@/lib/config";
+import { IntegrationUnavailable, InvalidOrder } from "@/lib/errors";
+import { browserCheckoutEnabled, checkoutBuyer } from "@/lib/payments/buyer";
+import { getRequest, type ApprovalRequest } from "./approvals";
+export const checkoutEnabled = browserCheckoutEnabled();
 export async function payApprovedRequest(
+  buyerId: string,
   request: ApprovalRequest,
 ): Promise<Order> {
-  void request;
-  throw new IntegrationUnavailable("payments");
+  if (!browserCheckoutEnabled()) throw new IntegrationUnavailable("payments");
+  // Read the canonical owner-scoped approval; never sign agent-supplied request data.
+  const approved = await getRequest(buyerId, request.id);
+  if (!approved || !["approved", "paid"].includes(approved.status))
+    throw new InvalidOrder("The owner has not approved this purchase.");
+  return checkoutBuyer(
+    buyerId,
+    {
+      shopSlug: approved.shopSlug,
+      items: approved.items.map(({ productId, qty }) => ({ productId, qty })),
+      pickupName: approved.pickupName,
+      expectedTotalCents: approved.totalCents,
+      idempotencyKey: approved.idempotencyKey,
+    },
+    appOrigin(),
+    { preFundedOnly: true },
+  );
 }
