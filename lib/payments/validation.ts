@@ -10,6 +10,16 @@ export class PaymentError extends Error {
     super(message);
   }
 }
+export function validateBrowserLimit(amountCents: number) {
+  const limit = Number(process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS ?? "2500");
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 10000)
+    throw new PaymentError(503, "Browser spending limit is misconfigured");
+  if (amountCents > limit)
+    throw new PaymentError(
+      403,
+      `This purchase exceeds the ${(limit / 100).toFixed(2)} AUSD checkout limit.`,
+    );
+}
 const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
 const integer = z
   .string()

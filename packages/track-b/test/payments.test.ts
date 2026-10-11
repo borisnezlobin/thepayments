@@ -13,6 +13,7 @@ import { MemoryRepository } from "../../../lib/payments/memory.js";
 import {
   verifyAuthorization,
   encodeHeader,
+  validateBrowserLimit,
 } from "../../../lib/payments/validation.js";
 import { createPaymentHandler } from "../../../lib/payments/http.js";
 import { walletVault } from "../../../lib/payments/wallets.js";
@@ -296,16 +297,149 @@ test("payX402 persists same authorization on retry", async () => {
       w,
       "http://localhost:4020/api/shops/cafe/orders",
       f.body,
-      { fetcher, idempotencyKey: "order-1" },
+      { fetcher, idempotencyKey: "order-1", expectedTotalCents: 500 },
     ),
     b = await f.payments.payX402(
       w,
       "http://localhost:4020/api/shops/cafe/orders",
       f.body,
-      { fetcher, idempotencyKey: "order-1" },
+      { fetcher, idempotencyKey: "order-1", expectedTotalCents: 500 },
     );
   assert.equal(a.order.id, b.order.id);
   assert.equal(f.rail.prepared, 1);
+});
+for (const changedPrice of [400, 600, 2600]) {
+  test(`fresh authorization rejects catalog change from approved 500 to ${changedPrice}`, async () => {
+    const f = await fixture(),
+      w = await f.payments.createWallet();
+    const initial = await f.payments.quote("cafe", f.body);
+    const handler = createPaymentHandler(f.payments);
+    let signedRequests = 0;
+    const fetcher = (async (url: RequestInfo | URL, options?: RequestInit) => {
+      const request = new Request(url, options);
+      if (request.headers.has("payment-signature")) signedRequests++;
+      else f.product.priceCents = changedPrice;
+      return handler(request);
+    }) as typeof fetch;
+    await assert.rejects(
+      f.payments.payX402(
+        w,
+        "http://localhost:4020/api/shops/cafe/orders",
+        f.body,
+        {
+          fetcher,
+          idempotencyKey: "price-race",
+          expectedTotalCents: initial.totalCents,
+        },
+      ),
+      (e: unknown) =>
+        e instanceof Error &&
+        "status" in e &&
+        e.status === 409 &&
+        /approve again/.test(e.message),
+    );
+    assert.equal(signedRequests, 0);
+    assert.equal(f.repository.clients.size, 0);
+    assert.equal(f.repository.orders.size, 0);
+    assert.equal(f.rail.prepared, 0);
+    assert.equal(f.rail.broadcasts, 0);
+  });
+}
+for (const [limit, status] of [
+  ["400", 403],
+  ["invalid", 503],
+] as const) {
+  test(`fresh signing rechecks a changed spending limit ${limit}`, async () => {
+    const previous = process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS;
+    try {
+      process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS = "2500";
+      const f = await fixture(),
+        w = await f.payments.createWallet();
+      const initial = await f.payments.quote("cafe", f.body);
+      validateBrowserLimit(initial.totalCents);
+      const handler = createPaymentHandler(f.payments);
+      const fetcher = (async (
+        url: RequestInfo | URL,
+        options?: RequestInit,
+      ) => {
+        process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS = limit;
+        return handler(new Request(url, options));
+      }) as typeof fetch;
+      await assert.rejects(
+        f.payments.payX402(
+          w,
+          "http://localhost:4020/api/shops/cafe/orders",
+          f.body,
+          {
+            fetcher,
+            idempotencyKey: "cap-race",
+            expectedTotalCents: initial.totalCents,
+          },
+        ),
+        (e: unknown) =>
+          e instanceof Error && "status" in e && e.status === status,
+      );
+      assert.equal(f.repository.clients.size, 0);
+      assert.equal(f.rail.prepared, 0);
+    } finally {
+      if (previous === undefined)
+        delete process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS;
+      else process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS = previous;
+    }
+  });
+}
+test("settled checkout recovery ignores new catalog/cap but rejects a different approved total", async () => {
+  const previous = process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS;
+  try {
+    process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS = "2500";
+    const f = await fixture(),
+      w = await f.payments.createWallet();
+    const handler = createPaymentHandler(f.payments);
+    let challenges = 0;
+    const fetcher = (async (url: RequestInfo | URL, options?: RequestInit) => {
+      const request = new Request(url, options);
+      if (!request.headers.has("payment-signature")) challenges++;
+      return handler(request);
+    }) as typeof fetch;
+    const options = {
+      fetcher,
+      idempotencyKey: "settled-original",
+      expectedTotalCents: 500,
+    };
+    const first = await f.payments.payX402(
+      w,
+      "http://localhost:4020/api/shops/cafe/orders",
+      f.body,
+      options,
+    );
+    f.product.priceCents = 900;
+    process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS = "100";
+    const recovered = await f.payments.payX402(
+      w,
+      "http://localhost:4020/api/shops/cafe/orders",
+      f.body,
+      options,
+    );
+    assert.equal(recovered.order.id, first.order.id);
+    assert.equal(recovered.txHash, first.txHash);
+    assert.equal(challenges, 1);
+    assert.equal(f.rail.prepared, 1);
+    assert.equal(f.repository.clients.size, 1);
+    await assert.rejects(
+      f.payments.payX402(
+        w,
+        "http://localhost:4020/api/shops/cafe/orders",
+        f.body,
+        { ...options, expectedTotalCents: 900 },
+      ),
+      /different approved total/,
+    );
+    assert.equal(f.rail.prepared, 1);
+  } finally {
+    if (previous === undefined)
+      delete process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS;
+    else process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS = previous;
+  }
 });
 test("testnet treasury funding idempotency and cap", async () => {
   const f = await fixture(),

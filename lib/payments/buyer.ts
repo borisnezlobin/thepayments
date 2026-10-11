@@ -4,7 +4,8 @@ import type { Address } from "viem";
 import { db } from "../db/client";
 import { toOrder, type OrderRow } from "../db/rows";
 import { paymentRuntime } from "./runtime";
-import { PaymentError } from "./validation";
+import { PaymentError, validateBrowserLimit } from "./validation";
+export { validateBrowserLimit } from "./validation";
 import { centsToUnits } from "./config";
 import type { Wallet } from "./index";
 import { fundBuyer, payX402 } from "./index";
@@ -62,16 +63,6 @@ async function buyerWallet(
   if (!preFundedOnly && process.env.PAYMENTS_AUTO_FUND_BUYERS === "true")
     await fundBuyer(wallet, 1000, `initial-buyer-funding-${buyerId}`);
   return wallet;
-}
-export function validateBrowserLimit(amountCents: number) {
-  const limit = Number(process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS ?? "2500");
-  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 10000)
-    throw new PaymentError(503, "Browser spending limit is misconfigured");
-  if (amountCents > limit)
-    throw new PaymentError(
-      403,
-      `This purchase exceeds the ${(limit / 100).toFixed(2)} AUSD checkout limit.`,
-    );
 }
 export async function checkoutBuyer(
   buyerId: string,
@@ -137,6 +128,7 @@ export async function checkoutBuyer(
     );
   const result = await payX402(wallet, url, body, {
     idempotencyKey: input.idempotencyKey,
+    expectedTotalCents: input.expectedTotalCents,
   });
   return result.order;
 }
