@@ -49,6 +49,15 @@ export async function signIn(form: FormData) {
   (await cookies()).delete(AGENT_COOKIE);
   redirect(safeNext(String(form.get("next") || "")));
 }
+const SIGN_UP_ERRORS: Record<string, string> = {
+  user_already_exists: "That email already has an account. Sign in instead.",
+  email_exists: "That email already has an account. Sign in instead.",
+  weak_password: "Choose a stronger password: at least 8 characters, mixing letters and numbers.",
+  over_email_send_rate_limit: "Too many sign-ups from this project in the last hour. Try again later or sign in.",
+  over_request_rate_limit: "Too many attempts. Wait a minute and try again.",
+  signup_disabled: "New accounts are turned off right now.",
+  email_address_invalid: "That email address can't receive mail. Try another one.",
+};
 export async function signUp(form: FormData) {
   if (!authConfigured())
     fail("/signup", "Account sign-up is not configured yet.");
@@ -63,11 +72,10 @@ export async function signUp(form: FormData) {
     ...parsed.data,
     options: { emailRedirectTo: `${appOrigin()}/auth/callback` },
   });
-  if (error)
-    fail(
-      "/signup",
-      "Unable to create your account. Try again or sign in if you already have one.",
-    );
+  if (error) {
+    console.error("signUp failed", { code: error.code, status: error.status, message: error.message });
+    fail("/signup", SIGN_UP_ERRORS[error.code ?? ""] ?? "Unable to create your account. Try again or sign in if you already have one.");
+  }
   (await cookies()).delete(AGENT_COOKIE);
   // Account creation is real. Wallet creation/funding wait for Track B.
   if (data.session) {

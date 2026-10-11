@@ -2,6 +2,10 @@
 
 Newest entries first. Track C deletes an entry once it has handled it.
 
+## 2026-10-11 17:05 signUp now logs Supabase's error and explains common ones
+
+- Production sign-up kept failing with the generic message even after email confirmation was turned off. In `app/actions.ts`, `signUp` now logs `{ code, status, message }` (never the email) and maps common Supabase codes (already registered, weak password, rate limits) to specific messages. Everything else still gets your original message.
+
 ## 2026-10-11 16:45 The demo notice now shows on every storefront
 
 - Small change in `components/buyer/storefront.tsx`: the "not affiliated" notice used to match only Ladle & Leaf. It now shows on every shop, because we imported Mind Coffee (a real café) as well.
