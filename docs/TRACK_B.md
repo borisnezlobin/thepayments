@@ -49,7 +49,7 @@ Known recovery limits: an intent stuck in `reserved` before durable preparation 
 
 ## Database and environment
 
-Apply `supabase/migrations/20261011194144_track_b_payments.sql` after the team's initial migration to a development project. It adds four Track B tables and service-only RPCs with RLS, explicit grants and no public policies. No existing migration is edited. Wallet storage uses AES-256-GCM with wallet ID and address as authenticated data.
+Apply `supabase/migrations/20261011194144_track_b_payments.sql` and `20261011201257_track_b_buyer_wallets.sql` after the team's initial migration to a development project. If the database already ran later team migrations, use `npx supabase migration up --local --include-all`; this was verified against the running local stack. Keep already-applied migration versions unchanged. It adds four Track B tables and service-only RPCs with RLS, explicit grants and no public policies. No existing migration is edited. Wallet storage uses AES-256-GCM with wallet ID and address as authenticated data.
 
 A claim atomically inserts the journal and `awaiting_payment` order with pickup name, named items, discounted unit prices and `payment_nonce`. Completion atomically sets `status=paid`, `tx_hash` and `paid_at`; withdrawals become `sent`. Track A's existing 2-second inbox polling sees paid orders.
 
@@ -78,7 +78,7 @@ Four wallets were created locally; private keys are encrypted in ignored `packag
 | ------------- | -------------------------------------------- | --------------------------------------------------------- |
 | Treasury      | `0x1f431DBAd3FC68268ee1299e0477c96CC64C0972` | Base Sepolia ETH for faucet; receives 10,000 testnet AUSD |
 | Local relayer | `0x7D53Cc1159f4C8f2F8A6bE1d32086841384Dbd5C` | Base Sepolia ETH if using local settlement                |
-| Buyer         | `0x765C18522496620Fd4574a3BBa6aac6BC1a0a0B0` | 100 AUSD distributed by fundBuyer                          |
+| Buyer         | `0x765C18522496620Fd4574a3BBa6aac6BC1a0a0B0` | 100 AUSD distributed by fundBuyer                         |
 | Merchant      | `0x125dE09d79f5F56f733505c1dDaaF39569F93F38` | Receives 5 AUSD; no initial funding                       |
 
 The sponsor confirmed 10,000 testnet AUSD per faucet request. The caller needs gas to call `requestFunds(treasuryAddress)`. [Google's faucet](https://cloud.google.com/application/web3/faucet) dispenses native test tokens; its documented Ethereum Sepolia option funds chain 11155111, not Base Sepolia. Select Base Sepolia if available; otherwise choose a Base Sepolia faucet from [Base's official list](https://docs.base.org/base-chain/tools/network-faucets). Do not buy real ETH. Hosted checkout gas is paid by the facilitator; local mode also needs ETH in the relayer.
@@ -101,14 +101,13 @@ For the app: configure Supabase in the package `.env`, then run `node --env-file
 
 Confirmed live evidence (October 11, 2026):
 
-| Action | Transaction |
-|---|---|
-| Faucet transfer: 10,000 AUSD to treasury | [0x2a54567ef726440a211e1af8761750767233aca2341b404cc1c54ddb4e2adfcc](https://sepolia.basescan.org/tx/0x2a54567ef726440a211e1af8761750767233aca2341b404cc1c54ddb4e2adfcc) |
+| Action                                             | Transaction                                                                                                                                                              |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Faucet transfer: 10,000 AUSD to treasury           | [0x2a54567ef726440a211e1af8761750767233aca2341b404cc1c54ddb4e2adfcc](https://sepolia.basescan.org/tx/0x2a54567ef726440a211e1af8761750767233aca2341b404cc1c54ddb4e2adfcc) |
 | Hosted ERC-3009 funding: 100 AUSD treasury → buyer | [0xfdd45a36eca3b8919092314b49555c289a4aabcf0d92aff362def3cd9e03f143](https://sepolia.basescan.org/tx/0xfdd45a36eca3b8919092314b49555c289a4aabcf0d92aff362def3cd9e03f143) |
-| Hosted x402 checkout: 5 AUSD buyer → merchant | [0xf03221cb46081ee5bce14092c396d7ad9fd8195e159ac82abdb5b77dffd62173](https://sepolia.basescan.org/tx/0xf03221cb46081ee5bce14092c396d7ad9fd8195e159ac82abdb5b77dffd62173) |
+| Hosted x402 checkout: 5 AUSD buyer → merchant      | [0xf03221cb46081ee5bce14092c396d7ad9fd8195e159ac82abdb5b77dffd62173](https://sepolia.basescan.org/tx/0xf03221cb46081ee5bce14092c396d7ad9fd8195e159ac82abdb5b77dffd62173) |
 
 Receipt status, two confirmations, exact Transfer and matching AuthorizationUsed events were verified before marking the fixture order paid. An independent Blockscout query reported status ok at block 47990410. Repeating the same live demo returned the same funding and checkout hashes, with no further debits. Balances afterward: treasury 9,900 AUSD, buyer 95 AUSD, merchant 5 AUSD. Treasury ETH remaining: 0.00009949342599991. The hosted facilitator paid gas; no buyer or merchant ETH was required.
-
 
 ## Track A integration
 
@@ -149,7 +148,7 @@ The test suite verifies real cryptographic SDK signatures, invalid signatures/do
 
 Lint and type checks pass. `npm run build -- --webpack` passed. Default Turbopack was blocked by a CSS worker's inability to bind a local port in this environment. Production and Track B tooling dependency audits are clean; inherited app development dependency advisories remain.
 
-Still pending: deployed Supabase RPC integration and the complete authenticated browser/MCP flow. Funded hosted AUSD settlement is verified. Also incomplete: CDP authentication/PayAI fallback validation, automated reserved-intent/nonce-gap recovery, smart contract buyer wallets, XRPL and bank conversion.
+Verified locally: actual Supabase RPC integration, authenticated buyer checkout with JavaScript disabled, owner-scoped receipt/history/balance and Track A inbox polling. Hosted cloud deployment and direct MCP spending remains intentionally unsupported. Also incomplete: CDP authentication/PayAI fallback validation, automated reserved-intent/nonce-gap recovery, smart contract buyer wallets, XRPL and bank conversion.
 
 ## Questions for Agora
 
@@ -159,4 +158,72 @@ Still pending: deployed Supabase RPC integration and the complete authenticated 
 4. Are ERC-1271 overloads and authorization events stable across proxy upgrades?
 5. What US merchant eligibility and dollar off-ramp should be described after the testnet demo?
 
-Track C delivery at `799c38c` was pulled and reviewed. Its `lib/buyer/checkout.ts` seam, `checkoutEnabled=false`, disabled storefront and unauthenticated MCP spend stub remain unchanged. Connecting that seam requires authoritative expected-total comparison, idempotent buyer-wallet provisioning/funding, authenticated receipt ownership and the remaining account/receipt integration. The funded settlement proof is now available. Those are integration blockers, not completed browser functionality.
+## Shared application integration and real browser proof
+
+The feature branch now connects Track C's existing checkout seam instead of using the fixture repository. Wallet provisioning is atomic through `track_b_assign_buyer_wallet`; an existing wallet is preserved. Buyer identity comes from Track C's verified owner/agent principal. New checkouts compare authoritative catalog prices to `expectedTotalCents` before wallet creation or funding. Retry uses the persisted authorization even if the menu later changes. Buyer wallet balance is checked on chain; the treasury can fund new wallets once per buyer when explicitly enabled.
+
+HTML checkout redirects to `/orders/:id` after verified settlement. Receipts are queried by both order ID and authenticated buyer ID. Account pages show the actual chain balance and paid order history. Failed HTML checkout preserves the same input/key in its retry form. Wrong origin, forged buyer IDs and edited checkout bodies are rejected. The normal-site referrer policy now permits browser form Origin headers; private `/agent/**` and `/m/**` capability routes retain no-referrer. This fixes the no-JavaScript login failure without accepting null/cross-site origins. [Origin header behavior](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Origin).
+
+Real website payment:
+
+- Order: `65c09301-874b-46af-b4cb-67d5a82e9c53` in the running local Supabase database.
+- Transaction: [0xeb14a96553a2911776c36531e77b84eecaaead675825acced4da54809956e078](https://sepolia.basescan.org/tx/0xeb14a96553a2911776c36531e77b84eecaaead675825acced4da54809956e078).
+- 5 AUSD from the same buyer wallet to the same merchant wallet, settled by x402.org; receipt/events independently checked.
+- The signed-in browser had JavaScript disabled. Track A's dashboard was already open and received the order via its existing two-second polling.
+- Repeating the checkout returned the same order/hash. Changed pickup name, changed displayed price, forged buyerId and wrong-origin submissions were rejected. No replay debits occurred.
+- Current balances after both checkout proofs: treasury 9,900 AUSD, buyer 90 AUSD, merchant 10 AUSD. No additional treasury ETH is needed for hosted checkout.
+
+### Team setup and acceptance procedure
+
+1. Review PR #1 and the feature branch. The human explicitly requested no main merge; handoff requests to merge do not override that instruction.
+2. Apply both Track B migrations to the team's development database. Use `--include-all` for local databases with later migration versions. Do not reset teammates' data or rename migrations already applied to this local stack.
+3. Set the required server variables above. Set `PAYMENTS_CHECKOUT_ENABLED=true`. For signup/first-checkout demo funding, set `PAYMENTS_AUTO_FUND_BUYERS=true` and configure the encrypted treasury ID or secure treasury key. Wallets are provisioned on the first valid checkout, not on every page load. Every environment must use the same encryption key as its stored wallet ciphertext.
+4. Track A can use its existing protected balance/withdrawal routes and polling inbox unchanged. **Older placeholder merchant addresses are not in the vault. Republishing alone preserves those non-null addresses.** Create a fresh demo shop, or deliberately clear/replace an unfunded placeholder only after checking that no payments are pending. Never replace a funded or user-owned wallet automatically.
+5. Track C's seam, buyer API, storefront button, account page and owned receipt are wired on this branch. These are the necessary integration edits; Auth/session/agent-link logic remains intact. Do not duplicate the implementation independently on main. Track C’s authenticated MCP `place_order` creates owner-approval requests; it does not pay directly.
+6. Configure Auth Site URL/redirects for the team's actual app origin. Sign up and confirm email if required. Publish a live shop with a real managed wallet. Choose one product, update the total, enter a pickup name and pay. Check the owned receipt's Basescan link, the `orders` row's paid status/hash/time and the merchant board's update. Repeat the same checkout key and confirm order/transaction counts remain one.
+
+To reproduce the completed local test, keep Docker and the started Supabase stack running. The ignored root `.env.local` is already configured for `http://127.0.0.1:3102`. Start `npm run dev -- --webpack --hostname 127.0.0.1 --port 3102`, then run `npm --prefix packages/track-b run browser-e2e`. Private test credentials and merchant capabilities are retained only in ignored `.local/` files. The browser script replays its existing checkout by default and does not charge again. `setup-app-test` is a development-only fixture initializer; it refuses to replace an existing `.env.local`.
+
+Final validation: 54 app unit tests plus 26 Track B tests, actual PostgreSQL migration/RLS checks, actual local Supabase RPCs, real chain transfers, no-JavaScript browser checkout, merchant polling, receipt ownership filtering and duplicate/invalid submission checks. Lint and both TypeScript checks pass. The complete integrated production build passes with `npm run build -- --webpack`. Default Turbopack remains affected by its worker port restriction in this execution environment. No production deployment or main merge occurred.
+
+Remaining limits: hosted cloud/Auth email configuration, direct MCP spending, smart-contract buyer wallets, XRPL, bank off-ramp conversion and automated recovery of reserved local-relayer nonce gaps. Configure TESTNET_OFFRAMP_ADDRESS before demonstrating withdrawals; the hosted rail pays their gas but the bank deposit remains a stub.
+
+## Instinct phone browser deployment handoff
+
+Use Track C's existing private `/agent/:token` link. Track B does not create another login system. The account owner creates the link on `/account`; Instinct opens it in its own browser and presses **Connect for ordering**. Its HttpOnly cookie resolves the existing buyer grant on every checkout. Revoked, expired or replaced grants fail authentication. Agent sessions cannot open account management, create links, approve their own requests or use merchant withdrawal APIs. The buyer payment API accepts no wallet address, private key, destination URL or transfer instruction.
+
+`POST /api/buyer/orders` accepts the existing validated form or JSON contract: `shopSlug`, `items` (product IDs and quantities), `pickupName`, `expectedTotalCents`, `idempotencyKey`. The server derives buyer identity from Track C's principal. It re-prices the products from Supabase and binds the signature to the shop's stored merchant wallet, AUSD token, Base Sepolia network and exact amount. Private keys remain encrypted in the server vault. An agent submission first becomes a pending Track C order request. Only the authenticated owner’s Approve action can transition it to approved and invoke payment. Signing and hosted x402 settlement happen server-side; Instinct needs neither MetaMask nor a blockchain signature screen.
+
+Fresh browser purchases have a default **25 AUSD per-purchase cap**. Set `PAYMENTS_BROWSER_MAX_ORDER_CENTS` to a positive integer of at most 10000 (100 AUSD); invalid configuration fails closed. The on-chain pre-funded wallet balance is the remaining total spending budget, not a daily allowance. Agent checkouts never create a wallet or call treasury funding, even if owner auto-funding is enabled. To increase an agent's total budget, the operator must explicitly fund the buyer. Original authorized retries remain reconcilable after the cap or catalog changes; they do not create another charge.
+
+Before giving Instinct a link, provision the verified buyer profile's wallet through the operator-only CLI. Configure the ignored package `.env` with the target Supabase server credentials, vault encryption key and funded treasury ID. Then run:
+
+```sh
+npm --prefix packages/track-b run provision-buyer -- VERIFIED_AUTH_BUYER_UUID 1000
+```
+
+This funds 10 AUSD, returns only public wallet/transaction information and preserves any existing managed wallet. Identical commands reuse the same funding intent. To provision the demo with 100 AUSD, pass `10000` cents instead. Changing the amount intentionally creates a separate funding intent. There is no browser funding endpoint. The existing local demo buyer is already funded; do not fund it again merely to replay the test.
+
+For a real phone, deploy the reviewed integrated application to **https://thepayments.vercel.app** with the team's Supabase project and imported encrypted wallets. Configure `APP_ORIGIN`, `NEXT_PUBLIC_SITE_URL` and `PAYMENTS_ALLOWED_ORIGINS` to that exact production origin; configure Supabase Auth Site URL and callbacks accordingly. Enable `PAYMENTS_CHECKOUT_ENABLED=true`, retain hosted mode and set the spending cap. localhost on the developer machine is not reachable from the phone. The production homepage is publicly accessible; no Vercel settings were changed. Track B has not deployed this integration or verified the production payment environment.
+
+Phone acceptance: owner funds the buyer and creates a link; Instinct opens/connects in its own browser, chooses items, updates the total and enters pickup name. Instinct asks the human to approve the shop/items/total before pressing Pay. The server also requires the authenticated owner to approve the request on `/account`. The approved payment hook rereads the owner-scoped canonical request before signing; supplied request fields cannot change the approved amount or items. A paid receipt must show a verified Basescan transaction. Track A's dashboard must show the same paid order. Retry the identical checkout and confirm the same order/hash; preserve the key on timeouts. A newly generated key represents a new purchase, so do not refresh the storefront to retry an uncertain payment.
+
+Regression proof additionally creates a real Track C agent link through the owner's existing UI, connects a fresh browser, replays the settled purchase, checks the 25-AUSD cap and withdrawal/account denial, revokes the link and verifies checkout then returns 401. No extra charge is made. Local Supabase security advisors report no warning/error issues.
+
+## Latest security review and release status
+
+The integrated branch preserves Track C’s latest request/approval system from main. Agents submit held requests; only the authenticated owner pays. The approval hook now takes the verified buyer ID and rereads the canonical owner-scoped request. Its wallet, approved items/amount, merchant catalog and original checkout ID feed Track B’s durable x402 client. Approved requests remain visible with **Check payment** after a timeout; retries reconcile the original intent. Direct owner checkout stays available. Fresh-browser testing exercised pending request → owner approval → original settled order/hash, with one order and no additional debit.
+
+Agent grants now expire after one hour. Resolution also enforces the one-hour lifetime from `created_at` on older rows with longer `expires_at`. Revocation/replacement remain Track C’s existing mechanisms. The 25-AUSD purchase cap and pre-funded wallet budget are enforced server-side. Account owner and agent may spend concurrently within the on-chain wallet balance; this is not a per-day allowance.
+
+Checkout now rejects merchant addresses absent from the encrypted vault or whose key cannot be decrypted. No existing address is overwritten. The actual local demo merchant has a usable encrypted key. Production must provision/import its managed merchant wallet before accepting a purchase.
+
+Withdrawal API now requires a persistent `Idempotency-Key`. The merchant UI saves that key across retries/reloads and offers **Check withdrawal** even after the balance has been debited or become unavailable. The backend recovers the original withdrawal intent/amount before consulting the chain balance. Tests verify the same withdrawal ID/hash after debit and an RPC outage. The bank off-ramp remains a testnet stub; configure a fixed testnet destination before enabling that part of a demo.
+
+Track A’s inbox now isolates chain-balance failure: paid orders and sales summary still load, balance is explicitly null/unavailable and new withdrawals are disabled. This is a narrow integration fix handed back to Track A, with a regression test; no balance is fabricated.
+
+Production `/api/shops` was checked directly and returned HTTP200 with `[]` at 2026-10-11 21:01UTC. The earlier500 no longer reproduces. Track A must publish a real demo shop and available products. The connected Supabase project `B@B proj` does not contain `public.shops` or this application’s migrations, so it cannot be assumed to be the production database. Identify the project referenced by Vercel’s SUPABASE_URL before applying any migration; do not install app tables in an unrelated project. Hosted payment schema/permissions, encrypted wallet imports and Vercel payment secrets remain release gates. Local migrations, RLS/RPC tests and security advisors pass.
+
+Apply the initial shared migration, Track C agent-link and approval migrations, default-discount migration and both additive Track B migrations to the confirmed hosted target. Preserve migration history; use the team’s process to include missing lower timestamp versions. Configure APP_ORIGIN, NEXT_PUBLIC_SITE_URL and PAYMENTS_ALLOWED_ORIGINS to `https://thepayments.vercel.app`; configure Supabase Auth callbacks and server-only keys. Enable checkout only after wallet provisioning and this environment verification. Never send secrets or private capability links to a repository handoff or chat.
+
+No merge or deployment is performed by Track B under the user’s latest instruction. PR#1 is the handoff to review; avoid independently rebuilding the wallet, checkout or receipt implementations already included here.

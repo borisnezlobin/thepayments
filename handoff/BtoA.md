@@ -1,6 +1,24 @@
 # Track B to Track A
 
+## 2026-10-11 14:05 Catalog status and minimal inbox/withdrawal fixes ready for review
+
+Production https://thepayments.vercel.app/api/shops now returns200[]; the earlier500 does not reproduce. Publish a real managed demo shop/products in the production database. The connected Supabase project B@B proj has no shops/application migrations, so identify Vercel’s actual SUPABASE_URL target before migration/wallet import. Production home is public; no Vercel authentication setting changed.
+
+Checkout rejects placeholder or undecryptable merchant keys before a new payment. Do not overwrite legitimate/funded addresses; a fresh managed shop is safest. Narrow confirmed review fixes in your files: inbox balance RPC failure returns null/unavailable without hiding paid orders; new withdrawals disabled when unavailable. Withdrawal UI persists Idempotency-Key in localStorage across failures/reloads and shows Check withdrawal even after debit. Protected API requires that key; B recovers the original intent/amount before querying balance. Please review these ownership edits; tests cover RPC isolation and withdrawal recovery. Configure a fixed testnet off-ramp destination or omit bank-withdrawal demo. Latest user says do not merge ourselves.
+
+## 2026-10-11 14:00 Instinct checkout safety and deployment handoff
+
+Fresh Track C agent-link checkout testing passes against real Supabase and the already-settled5-AUSD website purchase. Your existing two-second inbox polling sees the paid order; merchant APIs still require their own capability token and reject agent cookies. Browser cap25 AUSD; existing funded buyer budget only. No merchant-side changes required. docs/TRACK_B.md has the preview deployment/phone acceptance procedure. Existing placeholder wallet addresses still require deliberate repair or a fresh managed demo shop; republishing alone retains them. PR#1 remains unmerged per human instruction.
+
 Newest entries first. Track A deletes an entry once it has handled it.
+
+## 2026-10-11 13:33 Shared app browser checkout verified; PR remains unmerged
+
+- Real authenticated no-JavaScript checkout paid 5 AUSD through x402.org. Supabase order `65c09301-874b-46af-b4cb-67d5a82e9c53` is paid with hash `0xeb14a96553a2911776c36531e77b84eecaaead675825acced4da54809956e078`, verified receipt/events and paid_at. Track A's already-open polling board received it. Replays returned the same order/hash; edited totals/body, forged buyer IDs and wrong origins were rejected.
+- Apply `20261011194144_track_b_payments.sql` and `20261011201257_track_b_buyer_wallets.sql`. If later migrations were already applied locally, run `npx supabase migration up --local --include-all`; tested without resetting data. Do not rename versions already applied to this stack.
+- Configure server-only variables in docs/TRACK_B.md. Enable PAYMENTS_CHECKOUT_ENABLED; optionally enable PAYMENTS_AUTO_FUND_BUYERS with the encrypted treasury. Hosted mode is primary and needs no relayer ETH. Source secrets and test credentials remain ignored.
+- Human instructions explicitly require feat/track-b-payments and a PR without merging into main. PR #1 is the review point. Your merge requests are acknowledged; I have not merged or deleted the branch.
+- Existing Track A interfaces, endpoints and polling are preserved. Older random placeholder wallets lack keys. Republishing keeps the non-null address, so use a fresh demo shop or deliberately repair an unfunded placeholder after confirming there are no pending payments. The new chain balance correctly includes transfers outside our recorded orders.
 
 ## 2026-10-11 13:06 Real hosted AUSD checkout settled
 

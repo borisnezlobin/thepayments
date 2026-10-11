@@ -44,6 +44,18 @@ export function paymentKey(p: Payment): string {
   const a = p.payload.authorization;
   return `${NETWORK}:${AUSD.toLowerCase()}:${a.from.toLowerCase()}:${a.nonce.toLowerCase()}`;
 }
+function transferIntentKey(
+  from: Address,
+  kind: "fund" | "withdraw",
+  idempotencyKey: string,
+) {
+  const nonce =
+    `0x${hash({ from: from.toLowerCase(), kind, idempotencyKey })}` as Hex;
+  return {
+    nonce,
+    key: `${NETWORK}:${AUSD.toLowerCase()}:${from.toLowerCase()}:${nonce}`,
+  };
+}
 export async function signPayment(
   account: PrivateKeyAccount,
   r: Requirements,
@@ -67,6 +79,19 @@ export function createPayments(options: {
 }) {
   const { repository, rail } = options,
     vault = walletVault(repository, options.encryptionKey);
+  async function ensureMerchantWallet(address: Address) {
+    const merchantWallet = await repository.findWallet(address);
+    if (!merchantWallet)
+      throw new PaymentError(
+        503,
+        "Merchant wallet is not provisioned for payments",
+      );
+    try {
+      vault.decrypt(merchantWallet);
+    } catch {
+      throw new PaymentError(503, "Merchant signing wallet is unavailable");
+    }
+  }
   async function quote(slug: string, value: unknown) {
     const parsed = inputSchema.safeParse(value);
     if (!parsed.success)
@@ -91,6 +116,7 @@ export function createPayments(options: {
         500,
         "Shop discount must be integer percent from 0 to 50",
       );
+    await ensureMerchantWallet(shop.walletAddress);
     const products = await repository.getProducts(
       shop.id,
       input.items.map((i) => i.productId),
@@ -290,9 +316,11 @@ export function createPayments(options: {
         amountCents,
       });
     // The nonce is deterministic for a server initiated transfer, so retries sign the same authorization identity.
-    const nonce =
-      `0x${hash({ from: account.address.toLowerCase(), kind: withdrawal ? "withdraw" : "fund", idempotencyKey })}` as Hex;
-    const key = `${NETWORK}:${AUSD.toLowerCase()}:${account.address.toLowerCase()}:${nonce}`;
+    const { nonce, key } = transferIntentKey(
+      account.address,
+      withdrawal ? "withdraw" : "fund",
+      idempotencyKey,
+    );
     const prior = await repository.getIntent(key);
     if (prior && prior.binding !== binding)
       throw new PaymentError(
@@ -478,7 +506,11 @@ export function createPayments(options: {
         null,
       );
     },
-    async withdraw(shop: Shop, amountCents: number, idempotencyKey: string) {
+    async withdraw(
+      shop: Shop,
+      amountCents: number | undefined,
+      idempotencyKey: string,
+    ) {
       if (!options.offrampAddress)
         throw new Error("Testnet off-ramp address not configured");
       const authoritative = await repository.getShop(shop.slug);
@@ -486,6 +518,17 @@ export function createPayments(options: {
         throw new PaymentError(404, "Shop not found");
       const saved = await repository.findWallet(authoritative.walletAddress);
       if (!saved) throw new Error("Merchant wallet not in server vault");
+      // Recover the original withdrawal before querying the now-debited chain balance.
+      const prior = await repository.getIntent(
+        transferIntentKey(saved.walletAddress, "withdraw", idempotencyKey).key,
+      );
+      if (amountCents === undefined) {
+        amountCents =
+          prior?.withdrawal?.amountCents ??
+          Number((await rail.getBalance(saved.walletAddress)) / 10000n);
+        if (!Number.isSafeInteger(amountCents) || amountCents <= 0)
+          throw new PaymentError(409, "There is nothing to withdraw");
+      }
       const withdrawal: Withdrawal = {
         id: randomUUID(),
         shopId: shop.id,

@@ -32,6 +32,15 @@ test("actual PostgreSQL migration: role isolation, nonce allocation, atomic clai
         "utf8",
       ),
     );
+    await db.exec(
+      await readFile(
+        new URL(
+          "supabase/migrations/20261011201257_track_b_buyer_wallets.sql",
+          root,
+        ),
+        "utf8",
+      ),
+    );
     const shopId = randomUUID(),
       buyer = privateKeyToAccount(generatePrivateKey()),
       merchant = privateKeyToAccount(generatePrivateKey()),
@@ -184,6 +193,49 @@ test("actual PostgreSQL migration: role isolation, nonce allocation, atomic clai
       ["text", "text"],
     );
     await rpc("track_b_complete", [hostedIntent.key], ["text"]);
+    const buyerId = randomUUID(),
+      firstWallet = randomUUID(),
+      secondWallet = randomUUID();
+    await db.query("insert into buyers(id,email) values($1,$2)", [
+      buyerId,
+      "wallet-test@example.test",
+    ]);
+    await db.query(
+      "insert into track_b_wallets(id,wallet_address,encrypted_key) values($1,$2,$3),($4,$5,$6)",
+      [
+        firstWallet,
+        buyer.address,
+        "test-ciphertext",
+        secondWallet,
+        merchant.address,
+        "test-ciphertext",
+      ],
+    );
+    assert.equal(
+      await rpc(
+        "track_b_assign_buyer_wallet",
+        [buyerId, firstWallet],
+        ["uuid", "uuid"],
+      ),
+      buyer.address,
+    );
+    assert.equal(
+      await rpc(
+        "track_b_assign_buyer_wallet",
+        [buyerId, secondWallet],
+        ["uuid", "uuid"],
+      ),
+      buyer.address,
+    );
+    await db.exec("reset role;set role authenticated;");
+    await assert.rejects(
+      rpc(
+        "track_b_assign_buyer_wallet",
+        [buyerId, secondWallet],
+        ["uuid", "uuid"],
+      ),
+    );
+    await db.exec("reset role;set role service_role;");
     const saved = await rpc(
       "track_b_client_payment",
       ["client-key", payment],
