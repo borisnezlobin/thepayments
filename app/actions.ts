@@ -25,6 +25,12 @@ function fail(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
 }
 const secure = () => process.env.NODE_ENV === "production";
+// Logs why Supabase Auth refused a request so production failures show up in
+// the Vercel function logs. Messages can contain the email, so only the code is kept.
+function logAuthError(action: string, error: unknown) {
+  const { name, status, code } = (error ?? {}) as Record<string, unknown>;
+  console.error(`[auth] ${action} failed`, { name, status, code });
+}
 export async function signIn(form: FormData) {
   if (!authConfigured())
     fail("/login", "Account sign-in is not configured yet.");
@@ -36,6 +42,7 @@ export async function signIn(form: FormData) {
     );
   const supabase = await supabaseServer();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+  if (error) logAuthError("signIn", error);
   if (error)
     fail(
       "/login",
@@ -52,11 +59,14 @@ export async function signIn(form: FormData) {
 const SIGN_UP_ERRORS: Record<string, string> = {
   user_already_exists: "That email already has an account. Sign in instead.",
   email_exists: "That email already has an account. Sign in instead.",
-  weak_password: "Choose a stronger password: at least 8 characters, mixing letters and numbers.",
-  over_email_send_rate_limit: "Too many sign-ups from this project in the last hour. Try again later or sign in.",
+  weak_password:
+    "Choose a stronger password: at least 8 characters, mixing letters and numbers.",
+  over_email_send_rate_limit:
+    "Too many sign-ups from this project in the last hour. Try again later or sign in.",
   over_request_rate_limit: "Too many attempts. Wait a minute and try again.",
   signup_disabled: "New accounts are turned off right now.",
-  email_address_invalid: "That email address can't receive mail. Try another one.",
+  email_address_invalid:
+    "That email address can't receive mail. Try another one.",
 };
 export async function signUp(form: FormData) {
   if (!authConfigured())
@@ -73,15 +83,24 @@ export async function signUp(form: FormData) {
     options: { emailRedirectTo: `${appOrigin()}/auth/callback` },
   });
   if (error) {
-    console.error("signUp failed", { code: error.code, status: error.status, message: error.message });
-    fail("/signup", SIGN_UP_ERRORS[error.code ?? ""] ?? "Unable to create your account. Try again or sign in if you already have one.");
+    console.error("signUp failed", {
+      code: error.code,
+      status: error.status,
+      message: error.message,
+    });
+    fail(
+      "/signup",
+      SIGN_UP_ERRORS[error.code ?? ""] ??
+        "Unable to create your account. Try again or sign in if you already have one.",
+    );
   }
   (await cookies()).delete(AGENT_COOKIE);
   // Account creation is real. Wallet creation/funding wait for Track B.
   if (data.session) {
     try {
       await ensureBuyer(data.user!);
-    } catch {
+    } catch (profileError) {
+      logAuthError("ensureBuyer after signUp", profileError);
       fail(
         "/login",
         "Your account exists. Sign in again to finish buyer profile setup.",
