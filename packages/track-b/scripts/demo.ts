@@ -15,7 +15,10 @@ const result = await payments.payX402(
   { id: wallet.id, walletAddress: wallet.walletAddress },
   `${origin}/api/shops/${encodeURIComponent(slug)}/orders`,
   { pickupName: "Track B demo", items: [{ productId, qty: 1 }] },
-  { idempotencyKey: requiredEnv("DEMO_ORDER_KEY") },
+  {
+    idempotencyKey: requiredEnv("DEMO_ORDER_KEY"),
+    expectedTotalCents: Number(requiredEnv("DEMO_APPROVED_TOTAL_CENTS")),
+  },
 );
 console.log(JSON.stringify(result, null, 2));
 console.log(
