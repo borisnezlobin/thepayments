@@ -89,7 +89,7 @@ test("MCP browser page and discovery file explain current capabilities", async (
   const llms = await request.get("/llms.txt");
   const text = await llms.text();
   expect(text).toContain("/agents/connect");
-  expect(text).not.toContain("awaiting_approval");
+  expect(text).toContain("awaiting_approval");
 });
 test("MCP supports initialization, tool discovery, and a read-only menu request", async ({
   request,
@@ -162,7 +162,7 @@ test("agent token form works without JavaScript and keeps the token out of the U
   expect(page.url()).not.toContain(token);
   await expect(
     page.getByText(
-      "That token didn't work. It may be mistyped, expired or revoked.",
+      "That token didn't work. It may be mistyped, expired, already used or revoked.",
     ),
   ).toBeVisible();
   expect(await page.content()).not.toContain(token);

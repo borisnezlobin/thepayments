@@ -43,16 +43,21 @@ async function placeOrderTool(
   if (!buyerId)
     return failure(
       "authentication_required",
-      "Connect with the buyer's private agent link token as a Bearer token. No order was created.",
+      "Send the buyer's agent session token as a Bearer token. No order was created.",
     );
   try {
-    const order = await placeBuyerOrder({ buyerId, kind: "agent" }, input);
+    const { request } = await placeBuyerOrder(
+      { buyerId, kind: "agent" },
+      input,
+      "mcp",
+    );
     return output({
-      status: order.status,
-      orderId: order.id,
-      totalCents: order.totalCents,
-      txHash: order.txHash,
-      message: "Paid from the buyer's wallet. The shop has the order.",
+      status: "awaiting_approval",
+      requestId: request.id,
+      totalCents: request.totalCents,
+      expiresAt: request.expiresAt,
+      message:
+        "The buyer must approve this order on their account page. No payment has been taken yet.",
     });
   } catch (error) {
     if (error instanceof InvalidOrder)
@@ -65,14 +70,14 @@ async function placeOrderTool(
     return failure("internal_error", "The request could not be completed.");
   }
 }
-// Agents authenticate with the token from the buyer's private agent link.
-// The same revocation and expiry rules apply as in the browser.
+// Agents authenticate with the session token they got by redeeming a one-time
+// connection token. The same revocation and expiry rules apply as in the browser.
 async function verifyAgent(_request: Request, token?: string) {
   const principal = token ? await resolveAgent(token) : null;
   if (!principal) return undefined;
   return {
     token: token!,
-    clientId: "agent-link",
+    clientId: "agent-session",
     scopes: ["orders:request"],
     extra: { buyerId: principal.buyerId },
   };
@@ -118,7 +123,7 @@ const protocolHandler = createMcpHandler(
       {
         title: "Ask to place a pickup order",
         description:
-          "Requires the buyer's private agent link token as a Bearer token. Pays for the order from the buyer's pre-funded wallet and sends it to the shop. Report it as paid only when the result's status is paid. Money is integer USD cents; expectedTotalCents must match the agent prices from get_menu.",
+          "Requires the buyer's agent session token as a Bearer token. Sends the order to the buyer for approval. It is not paid until the buyer approves it on their account page. Never report it as paid. Money is integer USD cents; expectedTotalCents must match the agent prices from get_menu.",
         inputSchema: checkoutSchema,
         annotations: {
           readOnlyHint: false,
@@ -132,7 +137,7 @@ const protocolHandler = createMcpHandler(
   },
   { serverInfo: { name: "thepayments", version: "0.1.0" } },
 );
-// Reading shops and menus stays public. Only place_order needs the agent token.
+// Reading shops and menus stays public. Only place_order needs the agent session token.
 export const mcpHandler = withMcpAuth(protocolHandler, verifyAgent, {
   required: false,
 });

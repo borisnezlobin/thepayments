@@ -1,4 +1,4 @@
-import type { Order } from "@/lib/contract";
+import { buyerOrder } from "@/lib/payments/buyer";
 import { getPrincipal } from "@/lib/buyer/auth";
 import { placeBuyerOrder } from "@/lib/buyer/checkout";
 import { checkoutSchema } from "@/lib/buyer/schemas";
@@ -53,10 +53,39 @@ function formFailure(
     error instanceof PaymentError ? error.status : 503,
   );
 }
-function checkoutResponse(order: Order, isForm: boolean) {
-  if (isForm)
-    return Response.redirect(`${appOrigin()}/orders/${order.id}`, 303);
-  return Response.json(order, { headers: noStore });
+async function checkoutResponse(
+  result: Awaited<ReturnType<typeof placeBuyerOrder>>,
+  buyerId: string,
+  isForm: boolean,
+) {
+  if ("id" in result) {
+    if (isForm)
+      return Response.redirect(`${appOrigin()}/orders/${result.id}`, 303);
+    return Response.json(result, { headers: noStore });
+  }
+  const held = result.request;
+  if (held.status === "paid" && held.orderId) {
+    const paid = await buyerOrder(buyerId, held.orderId);
+    if (paid)
+      return isForm
+        ? Response.redirect(`${appOrigin()}/orders/${paid.id}`, 303)
+        : Response.json(paid, { headers: noStore });
+  }
+  const statusUrl = `${appOrigin()}/requests/${held.id}`;
+  // A browser agent lands on a page it can read. API clients get JSON.
+  if (isForm) return Response.redirect(statusUrl, 303);
+  return Response.json(
+    {
+      status: "awaiting_approval",
+      requestId: held.id,
+      totalCents: held.totalCents,
+      expiresAt: held.expiresAt,
+      statusUrl,
+      message:
+        "The account owner must approve this order. No payment has been taken yet.",
+    },
+    { status: 202, headers: noStore },
+  );
 }
 export async function POST(request: Request) {
   if (request.headers.get("origin") !== appOrigin())
@@ -87,9 +116,11 @@ export async function POST(request: Request) {
     );
   try {
     const result = await placeBuyerOrder(principal, parsed.data);
-    return checkoutResponse(result, isForm);
+    return checkoutResponse(result, principal.buyerId, isForm);
   } catch (error) {
-    if (isForm) return formFailure(parsed.data, error);
+    // An agent's request never reaches payment, so the payment retry page is owner-only.
+    if (isForm && principal.kind === "owner")
+      return formFailure(parsed.data, error);
     return failure(error);
   }
 }

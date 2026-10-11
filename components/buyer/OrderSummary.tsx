@@ -39,8 +39,14 @@ function OrderLines({ menu, lines }: { menu: ShopMenu; lines: OrderLine[] }) {
   );
 }
 
+function payLabel(principal: Principal | null, totalCents: number) {
+  return principal?.kind === "agent" ? `Send ${formatCents(totalCents)} order for approval` : `Pay ${formatCents(totalCents)} from wallet`;
+}
+
+// An agent only asks for approval, so it can send a request even before wallet checkout is on.
 function payDisabled({ principal, checkoutEnabled, lines }: Pick<SummaryProps, "principal" | "checkoutEnabled" | "lines">) {
-  return lines.length === 0 || !principal || !checkoutEnabled;
+  if (lines.length === 0 || !principal) return true;
+  return principal.kind !== "agent" && !checkoutEnabled;
 }
 
 function CheckoutNote({ principal, checkoutEnabled, slug }: { principal: Principal | null; checkoutEnabled: boolean; slug: string }) {
@@ -54,8 +60,8 @@ function CheckoutNote({ principal, checkoutEnabled, slug }: { principal: Princip
       </p>
     );
   }
+  if (principal.kind === "agent") return <p className="text-body-sm text-ink-muted">The account owner approves every agent order before anything is charged.</p>;
   if (!checkoutEnabled) return <p className="text-body-sm text-ink-muted">Wallet checkout is not available yet. No payment will be taken.</p>;
-  if (principal.kind === "agent") return <p className="text-body-sm text-ink-muted">Pays from the account owner&rsquo;s wallet.</p>;
   return null;
 }
 
@@ -82,7 +88,7 @@ export function OrderSummary(props: SummaryProps) {
             <input type="hidden" name="idempotencyKey" value={requestId} />
             <Field label="Pickup name" name="pickupName" autoComplete="given-name" required maxLength={80} placeholder="The name the café calls out" />
             <Button size="lg" className="w-full" disabled={payDisabled(props)}>
-              Pay {formatCents(totals.totalCents)} from wallet
+              {payLabel(principal, totals.totalCents)}
             </Button>
           </form>
           <CheckoutNote principal={principal} checkoutEnabled={checkoutEnabled} slug={menu.shop.slug} />

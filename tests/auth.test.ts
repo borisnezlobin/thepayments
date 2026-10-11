@@ -1,4 +1,4 @@
-import { isActiveGrant } from "@/lib/buyer/tokens";
+import { AGENT_CONNECT_SECONDS, isActiveGrant } from "@/lib/buyer/tokens";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   token: "",
@@ -71,13 +71,20 @@ describe("agent privilege boundary", () => {
   });
 });
 
-it("caps agent grants at 30 days even for legacy long-lived rows", () => {
+it("caps sessions at 90 days and connection tokens at 15 minutes, even for legacy rows", () => {
   const now = Date.now();
   const day = 86400000;
+  const minute = 60000;
   const grant = (ageMs: number) => ({
     expires_at: new Date(now + 365 * day).toISOString(),
     created_at: new Date(now - ageMs).toISOString(),
   });
-  expect(isActiveGrant(grant(2 * 3600000), now)).toBe(true);
-  expect(isActiveGrant(grant(30 * day + 1), now)).toBe(false);
+  expect(isActiveGrant(grant(30 * day), now)).toBe(true);
+  expect(isActiveGrant(grant(90 * day + 1), now)).toBe(false);
+  expect(isActiveGrant(grant(14 * minute), now, AGENT_CONNECT_SECONDS)).toBe(
+    true,
+  );
+  expect(
+    isActiveGrant(grant(15 * minute + 1), now, AGENT_CONNECT_SECONDS),
+  ).toBe(false);
 });

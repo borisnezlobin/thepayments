@@ -23,7 +23,8 @@ export default async function ConnectAgent({
         </span>
         <h1>Connect your agent</h1>
         <p className="lead">
-          Paste the agent access token from the buyer&rsquo;s account page.
+          Paste the agent access token from the buyer&rsquo;s account page. It
+          works once. After that you stay signed in for 90 days.
         </p>
         <form action={connectAgentWithToken} className="stack">
           <Field
@@ -38,15 +39,16 @@ export default async function ConnectAgent({
             maxLength={128}
             error={
               error === "invalid"
-                ? "That token didn't work. It may be mistyped, expired or revoked."
+                ? "That token didn't work. It may be mistyped, expired, already used or revoked."
                 : null
             }
           />
           <Button size="lg">Connect</Button>
         </form>
         <p className="muted">
-          A connected agent can browse shops and place orders. It can&rsquo;t
-          open account settings or withdraw money.
+          A connected agent can browse shops and ask to place orders. The buyer
+          approves each order. It can&rsquo;t open account settings or withdraw
+          money.
         </p>
       </section>
     </div>

@@ -6,12 +6,13 @@ import { z } from "zod";
 import { supabaseServer } from "@/lib/supabase/server";
 import { appOrigin, authConfigured, agentLinksConfigured } from "@/lib/config";
 import { ensureBuyer } from "@/lib/buyer/profile";
-import { requireOwner, resolveAgent } from "@/lib/buyer/auth";
+import { redeemConnectionToken, requireOwner } from "@/lib/buyer/auth";
 import { approveRequest, declineRequest } from "@/lib/buyer/approvals";
 import { IntegrationUnavailable, InvalidOrder } from "@/lib/errors";
 import {
+  AGENT_CONNECT_SECONDS,
   AGENT_COOKIE,
-  AGENT_LINK_SECONDS,
+  AGENT_SESSION_SECONDS,
   hashAgentToken,
   newAgentToken,
   safeNext,
@@ -128,7 +129,7 @@ export async function createAgentLink() {
       buyer_id: owner.buyerId,
       token_hash: hashAgentToken(token),
       expires_at: new Date(
-        Date.now() + AGENT_LINK_SECONDS * 1000,
+        Date.now() + AGENT_CONNECT_SECONDS * 1000,
       ).toISOString(),
       created_at: new Date().toISOString(),
     },
@@ -139,54 +140,54 @@ export async function createAgentLink() {
       "/account",
       "Could not create the agent link. Check that the Track C database setup is complete.",
     );
-  // Shown briefly only to the signed-in owner. Only its hash is stored in the DB.
+  // Shown only to the signed-in owner while it can still be used. Only its hash is stored in the DB.
   (await cookies()).set("payments-new-agent-link", token, {
     httpOnly: true,
     secure: secure(),
     sameSite: "strict",
     path: "/account",
-    maxAge: 120,
+    maxAge: AGENT_CONNECT_SECONDS,
   });
   redirect("/account#agent-link");
 }
+// Ends the agent's session and any connection token it hasn't used yet.
 export async function revokeAgentLink() {
   const owner = await requireOwner();
-  const { error } = await (await supabaseServer())
-    .from("track_c_agent_links")
-    .delete()
-    .eq("buyer_id", owner.buyerId);
-  if (error)
-    fail("/account", "Could not revoke the agent link. Please try again.");
+  const supabase = await supabaseServer();
+  const results = await Promise.all(
+    ["track_c_agent_sessions", "track_c_agent_links"].map((table) =>
+      supabase.from(table).delete().eq("buyer_id", owner.buyerId),
+    ),
+  );
+  if (results.some(({ error }) => error))
+    fail("/account", "Could not disconnect your agent. Please try again.");
   (await cookies()).delete({
     name: "payments-new-agent-link",
     path: "/account",
   });
   redirect("/account?notice=revoked#agent-link");
 }
-// Both connect paths share one session setup. The token never goes into a URL or a log.
-async function startAgentSession(token: string, failPath: string) {
-  if (!(await resolveAgent(token))) redirect(failPath);
-  (await cookies()).set(AGENT_COOKIE, token, {
+// Both connect paths use up the one-time connection token and give the agent's
+// browser a separate session token. Neither token goes into a URL or a log.
+async function startAgentSession(connectionToken: string) {
+  const session = await redeemConnectionToken(connectionToken);
+  if (!session) redirect("/agents/connect?error=invalid");
+  (await cookies()).set(AGENT_COOKIE, session.token, {
     httpOnly: true,
     secure: secure(),
     sameSite: "lax",
     path: "/",
-    maxAge: AGENT_LINK_SECONDS,
+    maxAge: AGENT_SESSION_SECONDS,
   });
   redirect("/shops?notice=connected");
 }
+// The Connect button on an /agent/<token> link page.
 export async function connectAgent(form: FormData) {
-  await startAgentSession(
-    String(form.get("token") || ""),
-    "/agents?error=expired",
-  );
+  await startAgentSession(String(form.get("token") || ""));
 }
 // Used by /agents/connect, where an agent pastes its access token into a form.
 export async function connectAgentWithToken(form: FormData) {
-  await startAgentSession(
-    String(form.get("token") || "").trim(),
-    "/agents/connect?error=invalid",
-  );
+  await startAgentSession(String(form.get("token") || "").trim());
 }
 const requestId = (form: FormData) => {
   const parsed = z.string().uuid().safeParse(form.get("requestId"));

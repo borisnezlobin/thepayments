@@ -5,6 +5,7 @@ import { appOrigin } from "@/lib/config";
 export const metadata = { title: "Order with your agent" };
 export default function Agents() {
   const endpoint = `${appOrigin()}/mcp`;
+  const sessionEndpoint = `${appOrigin()}/api/buyer/agent-session`;
   return (
     <div className="page agents">
       <header className="page-heading">
@@ -35,27 +36,31 @@ export default function Agents() {
         <div>
           <ol className="steps">
             <li>Create a buyer account and open your account page.</li>
-            <li>Create a private agent link and send it to your agent.</li>
-            <li>Ask it to open the link, connect, and find your shop.</li>
             <li>
-              If your agent keeps logins in a vault, save the access token there
-              instead. It pastes the token at{" "}
-              <Link href="/agents/connect">Connect your agent</Link>.
+              Press Connect Instinct. Save the access token in your
+              agent&rsquo;s vault, or send it the private link.
             </li>
             <li>
-              Choose quantities, update the order total and enter a pickup name.
-              Then place the order.
+              Your agent pastes the token at{" "}
+              <Link href="/agents/connect">Connect your agent</Link> or opens
+              the link. Either one works once, within 15 minutes.
             </li>
             <li>
-              Your agent pays from your funded wallet and lands on the receipt.
+              It stays signed in for 90 days. It can come back and order without
+              a new token.
             </li>
+            <li>
+              It chooses quantities, updates the order total and enters a pickup
+              name. Then it sends the order for approval.
+            </li>
+            <li>Approve or decline it on your account page.</li>
           </ol>
           <p className="notice">
-            Each order is capped by your per-order spending limit. Your agent
-            can&rsquo;t open your account settings or withdraw money.
+            Your agent can only ask. Nothing is charged until you approve the
+            order yourself. You can disconnect it at any time.
           </p>
           <Link className={buttonClasses()} href="/account">
-            Manage your agent link
+            Manage your agent
           </Link>
         </div>
       </section>
@@ -76,7 +81,7 @@ export default function Agents() {
                 mcpServers: {
                   thepayments: {
                     url: endpoint,
-                    headers: { Authorization: "Bearer <agent access token>" },
+                    headers: { Authorization: "Bearer <agent session token>" },
                   },
                 },
               },
@@ -85,8 +90,11 @@ export default function Agents() {
             )}
           </pre>
           <p className="small muted">
-            Client configuration varies. Use this URL with an MCP client that
-            supports Streamable HTTP.
+            Get the session token once by sending a new access token to{" "}
+            <code>POST {sessionEndpoint}</code> as{" "}
+            <code>{`{"token": "<agent access token>"}`}</code>. Client
+            configuration varies. Use this URL with an MCP client that supports
+            Streamable HTTP.
           </p>
           <dl className="tool-list">
             <div>
@@ -100,9 +108,9 @@ export default function Agents() {
             <div>
               <dt>place_order</dt>
               <dd>
-                Pays for an order from the buyer&rsquo;s funded wallet. It needs
-                the buyer&rsquo;s agent access token as a Bearer token. Report
-                an order as paid only when its status is paid.
+                Sends an order to the buyer for approval. It needs the agent
+                session token as a Bearer token. Nothing is paid until the buyer
+                approves it.
               </dd>
             </div>
           </dl>

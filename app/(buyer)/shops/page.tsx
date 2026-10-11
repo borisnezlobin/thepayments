@@ -43,8 +43,8 @@ export default async function Shops({
       </section>
       {notice === "connected" && (
         <p className="notice" role="status">
-          Agent connected. This session can browse shops and place orders when
-          checkout opens.
+          Agent connected. This browser stays signed in for 90 days. Each order
+          you place waits for the account owner&rsquo;s approval.
         </p>
       )}
       {notice === "agent" && (

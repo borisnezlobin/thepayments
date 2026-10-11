@@ -2,47 +2,33 @@ import { Button } from "@/components/ui/Button";
 import { Ticket, TicketLine, TicketRule } from "@/components/ui/Ticket";
 import { approveOrderRequest, declineOrderRequest } from "@/app/actions";
 import type { ApprovalRequest } from "@/lib/buyer/approvals";
-import { money } from "@/lib/money";
-function RequestTicket({
-  request,
-  canPay,
-}: {
-  request: ApprovalRequest;
-  canPay: boolean;
-}) {
+import { formatCents } from "@/lib/pricing";
+
+function askedAt(iso: string) {
+  return new Date(iso).toLocaleTimeString("en-US", { timeZone: "UTC", hour: "numeric", minute: "2-digit" });
+}
+
+function RequestTicket({ request, canPay }: { request: ApprovalRequest; canPay: boolean }) {
   return (
     <li>
       <Ticket tone="fresh">
-        <h3>{request.shopName}</h3>
-        <p className="small muted">
-          Your agent asked at{" "}
-          {new Date(request.createdAt).toLocaleTimeString("en-US", {
-            timeZone: "UTC",
-            hour: "numeric",
-            minute: "2-digit",
-          })}{" "}
-          UTC for pickup under {request.pickupName}.
+        <h3 className="text-body-lg font-semibold">{request.shopName}</h3>
+        <p className="text-body-sm text-ink-muted">
+          Your agent asked at {askedAt(request.createdAt)} UTC for pickup under {request.pickupName}.
         </p>
-        <ul className="receipt-items">
+        <ul className="mt-4 flex flex-col gap-1">
           {request.items.map((item) => (
             <li key={item.productId}>
-              <span>
-                {item.qty} × {item.name}
-              </span>
-              <span>{money(item.unitPriceCents * item.qty)}</span>
+              <TicketLine label={`${item.qty}× ${item.name}`} value={formatCents(item.unitPriceCents * item.qty)} />
             </li>
           ))}
         </ul>
         <TicketRule />
-        <TicketLine emphasis label="Total" value={money(request.totalCents)} />
-        <div className="approval-actions">
+        <TicketLine emphasis label="Total" value={formatCents(request.totalCents)} />
+        <div className="mt-5 flex flex-wrap gap-3">
           <form action={approveOrderRequest}>
             <input type="hidden" name="requestId" value={request.id} />
-            <Button disabled={!canPay}>
-              {request.status === "approved"
-                ? "Check payment"
-                : `Approve and pay ${money(request.totalCents)}`}
-            </Button>
+            <Button disabled={!canPay}>{request.status === "approved" ? "Check payment" : `Approve and pay ${formatCents(request.totalCents)}`}</Button>
           </form>
           <form action={declineOrderRequest}>
             <input type="hidden" name="requestId" value={request.id} />
@@ -53,29 +39,16 @@ function RequestTicket({
     </li>
   );
 }
-export function ApprovalRequests({
-  requests,
-  canPay,
-}: {
-  requests: ApprovalRequest[];
-  canPay: boolean;
-}) {
+
+export function ApprovalRequests({ requests, canPay }: { requests: ApprovalRequest[]; canPay: boolean }) {
   return (
-    <section id="approvals" className="account-section">
-      <div>
-        <h2>Waiting for your approval</h2>
-        <p>
-          Your agent can only ask. Nothing is charged until you approve an
-          order. Requests expire after 30 minutes.
-        </p>
-        {!canPay && (
-          <p className="small muted">
-            Approving opens when wallet checkout is connected. You can decline
-            now.
-          </p>
-        )}
+    <section id="approvals" aria-labelledby="approvals-heading" className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h2 id="approvals-heading">Waiting for your approval</h2>
+        <p className="text-body text-ink-muted">Nothing is paid until you approve an order. Requests expire after 30 minutes.</p>
+        {canPay ? null : <p className="text-body-sm text-ink-muted">Approving opens when wallet checkout is connected. You can decline now.</p>}
       </div>
-      <ul className="approval-list">
+      <ul className="flex flex-col gap-4">
         {requests.map((request) => (
           <RequestTicket key={request.id} request={request} canPay={canPay} />
         ))}
