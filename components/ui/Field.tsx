@@ -3,6 +3,9 @@ import type { InputHTMLAttributes, ReactNode } from "react";
 export const inputClasses =
   "h-11 w-full rounded-control border border-line bg-surface px-3.5 text-base sm:text-body-sm text-ink placeholder:text-ink-muted transition-[border-color,box-shadow] duration-150 focus:border-accent-ink focus:outline-none focus:shadow-accent-glow aria-invalid:border-danger";
 
+export const inlineInputClasses =
+  "w-full min-w-0 rounded-control bg-transparent px-2 py-1 placeholder:text-ink-muted transition-[background-color,box-shadow] duration-150 hover:bg-surface-sunken focus:bg-surface focus:shadow-ring focus:outline-none aria-invalid:bg-danger/10 aria-invalid:placeholder:text-danger";
+
 export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   hint?: ReactNode;

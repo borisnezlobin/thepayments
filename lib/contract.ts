@@ -24,6 +24,8 @@ export interface Product {
   category: string | null;
   available: boolean;
   position: number;
+  baseName: string | null;
+  sizeLabel: string | null;
 }
 
 export interface Buyer {
@@ -72,6 +74,8 @@ export interface MenuItem {
   category: string | null;
   priceCents: number;
   agentPriceCents: number;
+  baseName?: string | null;
+  sizeLabel?: string | null;
 }
 
 export interface ShopMenu {
@@ -103,6 +107,8 @@ export interface ProductEdit {
   description: string | null;
   priceCents: number;
   available: boolean;
+  baseName?: string | null;
+  sizeLabel?: string | null;
 }
 
 export interface UpdateShopRequest {
