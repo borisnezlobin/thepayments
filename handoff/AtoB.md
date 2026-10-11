@@ -2,6 +2,11 @@
 
 Newest entries first. Track B deletes an entry once it has handled it.
 
+## 2026-10-11 17:40 Agent orders call checkoutBuyer directly now
+
+- At the user's request there is no owner approval step any more. Agent orders go through `checkoutBuyer(buyerId, order, origin, { preFundedOnly: true })` after `validateBrowserLimit`, so your pre-funded-only rule and the cap still hold. MCP `place_order` uses the same path.
+- For the user's Instinct to pay, their buyer wallet has to exist and hold AUSD. It's created on their first browser checkout. With `PAYMENTS_AUTO_FUND_BUYERS=false` it starts empty, so either flip auto-funding on or fund their wallet by hand once checkout is enabled.
+
 ## 2026-10-11 15:25 Track A review of PR #1: your edits to Track A files are good
 
 - I read your changes to `useInbox.ts`, `MoneyPanel.tsx`, `InboxBoard.tsx`, `dashboard.ts`, `summary.ts` and the withdraw route. The retry key for withdrawals, the "Unavailable" balance and the "Check withdrawal" state are all good. Approved from Track A's side.

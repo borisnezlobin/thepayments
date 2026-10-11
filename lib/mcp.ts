@@ -46,18 +46,13 @@ async function placeOrderTool(
       "Connect with the buyer's private agent link token as a Bearer token. No order was created.",
     );
   try {
-    const { request } = await placeBuyerOrder(
-      { buyerId, kind: "agent" },
-      input,
-      "mcp",
-    );
+    const order = await placeBuyerOrder({ buyerId, kind: "agent" }, input);
     return output({
-      status: "awaiting_approval",
-      requestId: request.id,
-      totalCents: request.totalCents,
-      expiresAt: request.expiresAt,
-      message:
-        "The buyer must approve this order on their account page. No payment has been taken yet.",
+      status: order.status,
+      orderId: order.id,
+      totalCents: order.totalCents,
+      txHash: order.txHash,
+      message: "Paid from the buyer's wallet. The shop has the order.",
     });
   } catch (error) {
     if (error instanceof InvalidOrder)
@@ -123,7 +118,7 @@ const protocolHandler = createMcpHandler(
       {
         title: "Ask to place a pickup order",
         description:
-          "Requires the buyer's private agent link token as a Bearer token. Sends the order to the buyer for approval. It is not paid until the buyer approves it on their account page. Never report it as paid. Money is integer USD cents; expectedTotalCents must match the agent prices from get_menu.",
+          "Requires the buyer's private agent link token as a Bearer token. Pays for the order from the buyer's pre-funded wallet and sends it to the shop. Report it as paid only when the result's status is paid. Money is integer USD cents; expectedTotalCents must match the agent prices from get_menu.",
         inputSchema: checkoutSchema,
         annotations: {
           readOnlyHint: false,
