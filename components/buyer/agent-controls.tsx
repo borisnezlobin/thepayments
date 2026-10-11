@@ -35,8 +35,8 @@ export function AgentControls({
           <label htmlFor="new-link">Your private agent link</label>
           <textarea id="new-link" readOnly value={newLink} rows={3} />
           <p className="small">
-            Copy this now. It is shown for two minutes. Anyone with it can order
-            from your wallet once payments are enabled.
+            Copy this now. It is shown for two minutes. Anyone with it can ask
+            for orders on your account. You still approve each one.
           </p>
         </div>
       )}

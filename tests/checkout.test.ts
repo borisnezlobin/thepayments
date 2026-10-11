@@ -1,9 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { checkoutSchema } from "@/lib/buyer/schemas";
 import { money, quote } from "@/lib/money";
 import { placeBuyerOrder } from "@/lib/buyer/checkout";
+import { snapshotOrder } from "@/lib/buyer/approvals";
 import { agentPriceCents } from "@/lib/pricing";
 import { menu } from "./fixtures";
+vi.mock("@/lib/catalog", () => ({
+  getMenu: async (slug: string) => (slug === menu.shop.slug ? menu : null),
+}));
+vi.mock("@/lib/supabase/admin", () => ({
+  supabaseAdmin: () => {
+    throw new Error("The database is not used by these tests.");
+  },
+}));
 const order = {
   shopSlug: "test-cafe",
   items: [{ productId: "latte", qty: 1 }],
@@ -55,15 +64,37 @@ describe("checkout boundary", () => {
       checkoutSchema.safeParse({ ...order, pickupName: "   " }).success,
     ).toBe(false);
   });
-  it("never creates an order while Track B is disconnected", async () => {
+  it("never pays for the owner while Track B is disconnected", async () => {
     await expect(
       placeBuyerOrder(
         { buyerId: "buyer", email: "test@example.com", kind: "owner" },
         order,
       ),
     ).rejects.toMatchObject({ integration: "payments" });
+  });
+  it("holds agent orders for approval instead of paying", async () => {
+    // The agent path goes to the approval table, never to payments.
     await expect(
       placeBuyerOrder({ buyerId: "buyer", kind: "agent" }, order),
-    ).rejects.toMatchObject({ integration: "payments" });
+    ).rejects.toThrow("The database is not used by these tests.");
+  });
+});
+describe("approval snapshot", () => {
+  it("prices the order from the live menu", () => {
+    expect(snapshotOrder(menu, order)).toMatchObject({
+      shop_slug: "test-cafe",
+      shop_name: "Test Café",
+      items: [
+        { productId: "latte", name: "Oat latte", qty: 1, unitPriceCents: 475 },
+      ],
+      subtotal_cents: 500,
+      total_cents: 475,
+      pickup_name: "Lee",
+    });
+  });
+  it("rejects a total the agent did not see", () => {
+    expect(() =>
+      snapshotOrder(menu, { ...order, expectedTotalCents: 400 }),
+    ).toThrow("The total changed");
   });
 });

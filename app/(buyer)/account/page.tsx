@@ -3,6 +3,9 @@ import { buttonClasses } from "@/components/ui/Button";
 import { AgentControls } from "@/components/buyer/agent-controls";
 import { requireOwner } from "@/lib/buyer/auth";
 import { agentLinkState } from "@/lib/buyer/agent-link-state";
+import { pendingRequests } from "@/lib/buyer/approvals";
+import { checkoutEnabled } from "@/lib/buyer/checkout";
+import { ApprovalRequests } from "@/components/buyer/approval-requests";
 export const metadata = {
   title: "Your account",
   robots: { index: false, follow: false },
@@ -15,6 +18,7 @@ export default async function Account({
   const owner = await requireOwner();
   const params = await searchParams;
   const linkState = await agentLinkState(owner.buyerId);
+  const requests = await pendingRequests(owner.buyerId).catch(() => []);
   return (
     <div className="page account">
       <header className="page-heading">
@@ -35,6 +39,19 @@ export default async function Account({
         <p role="status" className="notice">
           Agent access revoked. The old link and its sessions no longer work.
         </p>
+      )}
+      {params.notice === "approved" && (
+        <p role="status" className="notice">
+          Order approved and paid.
+        </p>
+      )}
+      {params.notice === "declined" && (
+        <p role="status" className="notice">
+          Order declined. Nothing was charged.
+        </p>
+      )}
+      {requests.length > 0 && (
+        <ApprovalRequests requests={requests} canPay={checkoutEnabled} />
       )}
       <section className="account-overview" aria-label="Wallet and savings">
         <div className="wallet-panel">
@@ -57,8 +74,9 @@ export default async function Account({
         <div>
           <h2>Let your agent order.</h2>
           <p>
-            Send a private link to Instinct once. It can browse menus and place
-            orders when checkout is available, without your password.
+            Send a private link to Instinct once. It can browse menus and ask
+            to place orders without your password. You approve each order here
+            before anything is charged.
           </p>
           <p className="muted small">
             The link grants ordering access only. It cannot manage your account,

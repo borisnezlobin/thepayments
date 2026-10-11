@@ -253,6 +253,15 @@
   .buyer-site .agent-controls {
     @apply grid content-start justify-items-start gap-4;
   }
+  .buyer-site .approval-list {
+    @apply grid content-start gap-4;
+  }
+  .buyer-site .approval-list h3 {
+    @apply mb-1;
+  }
+  .buyer-site .approval-actions {
+    @apply mt-5 flex flex-wrap gap-3;
+  }
   .buyer-site .link-reveal {
     @apply w-full rounded-control bg-accent-wash p-5;
   }

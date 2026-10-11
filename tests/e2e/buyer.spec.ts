@@ -73,7 +73,7 @@ test("MCP browser page and discovery file explain current capabilities", async (
     page.getByRole("heading", { name: "Connect directly." }),
   ).toBeVisible();
   const llms = await request.get("/llms.txt");
-  expect(await llms.text()).toContain("payment_integration_pending");
+  expect(await llms.text()).toContain("awaiting_approval");
 });
 test("MCP supports initialization, tool discovery, and a read-only menu request", async ({
   request,
@@ -115,7 +115,8 @@ test("MCP supports initialization, tool discovery, and a read-only menu request"
     },
   });
   expect(order.ok()).toBe(true);
-  expect(await order.text()).toContain("payment_integration_pending");
+  // Without the buyer's agent token, nothing is queued or paid.
+  expect(await order.text()).toContain("authentication_required");
 });
 test("browser order endpoint blocks cross-origin and unauthenticated submissions", async ({
   request,

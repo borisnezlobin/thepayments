@@ -2,7 +2,36 @@ import { getPrincipal } from "@/lib/buyer/auth";
 import { placeBuyerOrder } from "@/lib/buyer/checkout";
 import { checkoutSchema } from "@/lib/buyer/schemas";
 import { appOrigin } from "@/lib/config";
-import { IntegrationUnavailable } from "@/lib/errors";
+import { IntegrationUnavailable, InvalidOrder } from "@/lib/errors";
+const noStore = { "Cache-Control": "no-store" };
+async function readBody(request: Request, type: string): Promise<unknown> {
+  if (type.includes("application/json")) return request.json();
+  const form = await request.formData();
+  return {
+    shopSlug: form.get("shopSlug"),
+    items: JSON.parse(String(form.get("items"))),
+    pickupName: form.get("pickupName"),
+    expectedTotalCents: Number(form.get("expectedTotalCents")),
+    idempotencyKey: form.get("idempotencyKey"),
+  };
+}
+function failure(error: unknown) {
+  if (error instanceof InvalidOrder)
+    return Response.json(
+      { error: "invalid_order", message: error.message },
+      { status: 409, headers: noStore },
+    );
+  if (error instanceof IntegrationUnavailable)
+    return Response.json(
+      {
+        error: "payment_integration_pending",
+        message:
+          "Wallet checkout is not connected. No payment was taken and no order was created.",
+      },
+      { status: 503, headers: noStore },
+    );
+  return Response.json({ error: "order_failed" }, { status: 500 });
+}
 export async function POST(request: Request) {
   if (request.headers.get("origin") !== appOrigin())
     return Response.json({ error: "origin_not_allowed" }, { status: 403 });
@@ -10,26 +39,17 @@ export async function POST(request: Request) {
   if (!principal)
     return Response.json({ error: "authentication_required" }, { status: 401 });
   const type = request.headers.get("content-type") || "";
+  const isForm =
+    type.includes("application/x-www-form-urlencoded") ||
+    type.includes("multipart/form-data");
+  if (!isForm && !type.includes("application/json"))
+    return Response.json(
+      { error: "unsupported_content_type" },
+      { status: 415 },
+    );
   let body: unknown;
   try {
-    if (type.includes("application/json")) body = await request.json();
-    else if (
-      type.includes("application/x-www-form-urlencoded") ||
-      type.includes("multipart/form-data")
-    ) {
-      const form = await request.formData();
-      body = {
-        shopSlug: form.get("shopSlug"),
-        items: JSON.parse(String(form.get("items"))),
-        pickupName: form.get("pickupName"),
-        expectedTotalCents: Number(form.get("expectedTotalCents")),
-        idempotencyKey: form.get("idempotencyKey"),
-      };
-    } else
-      return Response.json(
-        { error: "unsupported_content_type" },
-        { status: 415 },
-      );
+    body = await readBody(request, type);
   } catch {
     return Response.json({ error: "invalid_request" }, { status: 400 });
   }
@@ -40,17 +60,23 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   try {
-    return Response.json(await placeBuyerOrder(principal, parsed.data));
+    const { request: held } = await placeBuyerOrder(principal, parsed.data);
+    const statusUrl = `${appOrigin()}/requests/${held.id}`;
+    // A browser agent lands on a page it can read. API clients get JSON.
+    if (isForm) return Response.redirect(statusUrl, 303);
+    return Response.json(
+      {
+        status: "awaiting_approval",
+        requestId: held.id,
+        totalCents: held.totalCents,
+        expiresAt: held.expiresAt,
+        statusUrl,
+        message:
+          "The account owner must approve this order. No payment has been taken yet.",
+      },
+      { status: 202, headers: noStore },
+    );
   } catch (error) {
-    if (error instanceof IntegrationUnavailable)
-      return Response.json(
-        {
-          error: "payment_integration_pending",
-          message:
-            "Wallet checkout is not connected. No payment was taken and no order was created.",
-        },
-        { status: 503, headers: { "Cache-Control": "no-store" } },
-      );
-    return Response.json({ error: "order_failed" }, { status: 500 });
+    return failure(error);
   }
 }

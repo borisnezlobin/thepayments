@@ -1,9 +1,19 @@
 import "server-only";
-import { createMcpHandler } from "mcp-handler";
+import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import { findShops, getMenu } from "@/lib/catalog";
-import { checkoutSchema, slugSchema } from "@/lib/buyer/schemas";
-import { CatalogError, IntegrationUnavailable } from "@/lib/errors";
+import {
+  checkoutSchema,
+  slugSchema,
+  type CheckoutInput,
+} from "@/lib/buyer/schemas";
+import { resolveAgent } from "@/lib/buyer/auth";
+import { placeBuyerOrder } from "@/lib/buyer/checkout";
+import {
+  CatalogError,
+  IntegrationUnavailable,
+  InvalidOrder,
+} from "@/lib/errors";
 const output = (value: unknown) => ({
   content: [{ type: "text" as const, text: JSON.stringify(value) }],
 });
@@ -25,7 +35,54 @@ async function catalogTool(fn: () => Promise<unknown>) {
     return failure("internal_error", "The request could not be completed.");
   }
 }
-export const mcpHandler = createMcpHandler(
+async function placeOrderTool(
+  input: CheckoutInput,
+  extra: Record<string, unknown> | undefined,
+) {
+  const buyerId = typeof extra?.buyerId === "string" ? extra.buyerId : null;
+  if (!buyerId)
+    return failure(
+      "authentication_required",
+      "Connect with the buyer's private agent link token as a Bearer token. No order was created.",
+    );
+  try {
+    const { request } = await placeBuyerOrder(
+      { buyerId, kind: "agent" },
+      input,
+      "mcp",
+    );
+    return output({
+      status: "awaiting_approval",
+      requestId: request.id,
+      totalCents: request.totalCents,
+      expiresAt: request.expiresAt,
+      message:
+        "The buyer must approve this order on their account page. No payment has been taken yet.",
+    });
+  } catch (error) {
+    if (error instanceof InvalidOrder)
+      return failure("invalid_order", error.message);
+    if (error instanceof IntegrationUnavailable)
+      return failure(
+        "integration_pending",
+        "Ordering is not connected yet. No order was created and no funds moved.",
+      );
+    return failure("internal_error", "The request could not be completed.");
+  }
+}
+// Agents authenticate with the token from the buyer's private agent link.
+// The same revocation and expiry rules apply as in the browser.
+async function verifyAgent(_request: Request, token?: string) {
+  const principal = token ? await resolveAgent(token) : null;
+  if (!principal) return undefined;
+  return {
+    token: token!,
+    clientId: "agent-link",
+    scopes: ["orders:request"],
+    extra: { buyerId: principal.buyerId },
+  };
+}
+const protocolHandler = createMcpHandler(
   (server) => {
     server.registerTool(
       "find_shops",
@@ -64,23 +121,23 @@ export const mcpHandler = createMcpHandler(
     server.registerTool(
       "place_order",
       {
-        title: "Place a pickup order (not available yet)",
+        title: "Ask to place a pickup order",
         description:
-          "Payment integration is pending. Cannot place orders or move funds yet. Never report an order as paid after calling it.",
+          "Requires the buyer's private agent link token as a Bearer token. Sends the order to the buyer for approval. It is not paid until the buyer approves it on their account page. Never report it as paid. Money is integer USD cents; expectedTotalCents must match the agent prices from get_menu.",
         inputSchema: checkoutSchema,
         annotations: {
           readOnlyHint: false,
-          destructiveHint: true,
+          destructiveHint: false,
           idempotentHint: true,
           openWorldHint: true,
         },
       },
-      async () =>
-        failure(
-          "payment_integration_pending",
-          "Wallet payment is not connected. No order was created and no funds moved.",
-        ),
+      async (input, ctx) => placeOrderTool(input, ctx.http?.authInfo?.extra),
     );
   },
   { serverInfo: { name: "thepayments", version: "0.1.0" } },
 );
+// Reading shops and menus stays public. Only place_order needs the agent token.
+export const mcpHandler = withMcpAuth(protocolHandler, verifyAgent, {
+  required: false,
+});
