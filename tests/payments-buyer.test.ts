@@ -140,7 +140,10 @@ describe("authenticated buyer payment boundary", () => {
       { id: "stored-wallet", address: state.address },
       "https://our.test/api/shops/demo/orders",
       { buyerId: "verified-auth-id", pickupName: "Buyer", items: input.items },
-      { idempotencyKey: input.idempotencyKey },
+      {
+        idempotencyKey: input.idempotencyKey,
+        expectedTotalCents: input.expectedTotalCents,
+      },
     );
   });
   it("uses the wallet selected by the atomic database RPC, not an unused concurrent candidate", async () => {

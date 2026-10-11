@@ -9,6 +9,7 @@ import {
   verifyAuthorization,
   PaymentError,
   sameAddress,
+  validateBrowserLimit,
 } from "./validation";
 import type {
   Intent,
@@ -429,7 +430,11 @@ export function createPayments(options: {
       buyerWallet: Wallet,
       url: string,
       body: OrderInput,
-      clientOptions: { idempotencyKey?: string; fetcher?: typeof fetch } = {},
+      clientOptions: {
+        idempotencyKey?: string;
+        fetcher?: typeof fetch;
+        expectedTotalCents: number;
+      },
     ) {
       const fetcher = clientOptions.fetcher ?? fetch;
       const target = new URL(url);
@@ -454,15 +459,28 @@ export function createPayments(options: {
       // Server binds an authorization to the order body; changing a reused key returns 409 there.
       if (!p) {
         const q = await clientQuote(fetcher, url, request, target, body);
+        const account = await vault.account(buyerWallet);
+        // The challenge may reflect a newer catalog than the owner's initial quote.
+        // Check the approved amount and current cap at the fresh signing boundary.
+        if (q.totalCents !== clientOptions.expectedTotalCents)
+          throw new PaymentError(
+            409,
+            "The menu price changed. Review the new total and approve again.",
+          );
+        validateBrowserLimit(q.totalCents);
         p = await repository.saveClientPayment(
           clientKey,
-          await signPayment(
-            await vault.account(buyerWallet),
-            q.requirements,
-            url,
-          ),
+          await signPayment(account, q.requirements, url),
         );
       }
+      if (
+        p.accepted.amount !==
+        centsToUnits(clientOptions.expectedTotalCents).toString()
+      )
+        throw new PaymentError(
+          409,
+          "This checkout is bound to a different approved total",
+        );
       const response = await fetcher(url, {
         ...request,
         headers: { ...request.headers, "PAYMENT-SIGNATURE": encodeHeader(p) },

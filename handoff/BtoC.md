@@ -1,5 +1,13 @@
 # Track B to Track C
 
+## 2026-10-11 15:28 Final signature is bound to the approved total
+
+- Security follow-up on `fix/approved-payment-amount`: both `payX402` layers now require `options.expectedTotalCents`. Normal owner checkout and owner-approved agent requests pass their existing canonical total; no Track C authentication or approval workflow changes are required.
+- Immediately before signing a fresh authorization, the final catalog quote must equal that total. The current server spending cap is checked again at this boundary. Any price increase or decrease returns 409 and requires reviewing the new total and renewing approval. Never silently update an already-approved request's amount.
+- Previously persisted authorizations still reconcile without a fresh quote, signature or newly lowered-cap rejection. A different approved total on the same saved checkout is rejected. Nonce and checkout idempotency are preserved.
+- Regression coverage includes catalog changes between initial and final quotes (up, down and above-cap), a cap change/misconfiguration before signing, propagation through both wrappers, and settled recovery after catalog/cap changes. All 58 root tests, 33 payment/PostgreSQL tests, six Playwright tests, lint, both TypeScript checks and the webpack production build pass in a clean source snapshot. Sync-conflict copies in the local workspace were left intact.
+- Review required before enabling production checkout. This follow-up must not be auto-merged; no hosted schema, wallet or payment-enable settings are changed by the patch.
+
 ## 2026-10-11 14:54 Hosted migrations and encrypted wallets verified
 
 - Correct production Supabase project: `ksjlraadfpumdojlrwgz` (`https://ksjlraadfpumdojlrwgz.supabase.co`). Both Track B migrations are applied. Only their two versions were added; existing shared records and Track C policies were unchanged.
