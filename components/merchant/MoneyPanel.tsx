@@ -32,7 +32,7 @@ function SalesReceipt({ summary }: { summary: SalesSummary }) {
           value={`${summary.keptCents >= 0 ? "+" : "−"}${formatCents(Math.abs(summary.keptCents))}`}
           emphasis
         />
-        <p className="text-caption text-ink-muted">Card fees are what Stripe would charge online: 2.9% plus 30¢ per order.</p>
+        <p className="text-caption text-ink-muted">Card fees use Stripe&rsquo;s online rate of 2.9% plus 30¢ per order.</p>
       </section>
     </Ticket>
   );
@@ -70,7 +70,7 @@ function WithdrawPanel({ balanceCents, withdrawals, busy, onWithdraw }: { balanc
           ))}
         </ul>
       ) : null}
-      <p className="text-caption text-surface/75">In this demo the transfer to an off-ramp is real on Base Sepolia, and the bank deposit after it is simulated.</p>
+      <p className="text-caption text-surface/75">In this demo the transfer to an off-ramp is real on Base Sepolia. The bank deposit after it is simulated.</p>
     </section>
   );
 }

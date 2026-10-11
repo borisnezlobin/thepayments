@@ -32,17 +32,7 @@ export function MerchantHeader({ shop, token, current }: { shop: Shop; token: st
             ) : null}
           </div>
         </div>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <h1 className="text-title font-extrabold sm:text-display">{shop.name}</h1>
-            <span
-              className={`inline-flex h-7 items-center gap-1.5 rounded-pill px-3 text-caption font-semibold ${live ? "bg-accent text-on-accent" : "bg-surface-sunken text-ink-muted"}`}
-            >
-              <span aria-hidden className={`size-2 rounded-pill ${live ? "bg-on-accent" : "bg-ink-muted"}`} />
-              {live ? "Live" : "Draft"}
-            </span>
-          </div>
-        </div>
+        <h1 className="text-title font-bold sm:text-display">{shop.name}</h1>
         <nav aria-label="Dashboard" className="-mb-px flex gap-6">
           {NAV.filter((item) => live || item.section === "menu").map((item) => (
             <Link

@@ -2,9 +2,11 @@
 
 import { useId } from "react";
 import { Ticket, TicketLine, TicketRule } from "@/components/ui/Ticket";
+import { rangeFill } from "@/components/ui/rangeFill";
 import { agentPriceCents, cardFeeCents, formatCents } from "@/lib/pricing";
 
 const EXAMPLE_ORDER_CENTS = 500;
+const MAX_DISCOUNT_PCT = 10;
 
 export function DiscountPanel({ discountPct, onChange }: { discountPct: number; onChange: (pct: number) => void }) {
   const sliderId = useId();
@@ -28,11 +30,12 @@ export function DiscountPanel({ discountPct, onChange }: { discountPct: number; 
           id={sliderId}
           type="range"
           min={0}
-          max={20}
+          max={MAX_DISCOUNT_PCT}
           step={1}
           value={discountPct}
           onChange={(event) => onChange(Number(event.target.value))}
-          className="h-2 w-full cursor-pointer accent-accent-ink"
+          style={rangeFill(discountPct, 0, MAX_DISCOUNT_PCT)}
+          className="range-accent w-full"
         />
         <div className="flex flex-col gap-2">
           <TicketLine label={`A ${formatCents(EXAMPLE_ORDER_CENTS)} order costs the agent`} value={formatCents(agentPays)} />
@@ -44,7 +47,7 @@ export function DiscountPanel({ discountPct, onChange }: { discountPct: number; 
         <p className={`text-body-sm ${kept < 0 ? "font-semibold text-danger" : "text-ink-muted"}`}>
           {kept < 0
             ? "At this discount you'd make less than with a card. Try a smaller one."
-            : "A discount gives assistants a reason to pick your shop. Keep it below the card fee and you still come out ahead."}
+            : "A discount gives assistants a reason to pick your shop. Below the card fee, you still come out ahead."}
         </p>
       </div>
     </Ticket>

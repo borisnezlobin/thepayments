@@ -46,4 +46,8 @@ Shared files change additively. Add new fields and functions, and don't rename o
 - Use the components in `components/ui` before writing new markup for a button, field, ticket or status.
 - Icons come from `@phosphor-icons/react`. Use `@phosphor-icons/react/dist/ssr` in server components. No emoji.
 - Teal `#00BCA8` (`accent`) is a fill and accent only. Teal text uses `accent-ink`, and text on a teal fill uses `on-accent`.
-- No all-caps labels, no letter-spacing changes, and no rounded element with a visible colored border. Subtle form inputs are the one exception.
+- No all-caps labels and no rounded element with a visible colored border. Subtle form inputs are the one exception. Body text carries `--tracking-body` from the theme. Don't add other letter-spacing.
+- No AI-template tells (from the defect.tech standard): no grids of identical cards or small headed lists, no rows of three as a reflex, no gradient washes or glows as decoration, no `→` after button or link text, no eyebrows above headings, no middle-dot metadata strips, no fade-in on every section, no centered-everything layouts. One obvious subject per screen.
+- Copy: never join a second clause with ", and" or ", so" (make it its own sentence). No trailing appositions after a colon or dash, no "it's not X, it's Y", no "matters", no hype words, no fragments posing as sentences. Every line carries a fact or an action. Avoid filler words like "seamless", "elevate", "curated", "crafted" and "genuinely".
+- Use the theme's named sizes and layouts (`lg:layout-sidebar`, `lg:layout-hero`, `drop-shadow-ticket`) instead of arbitrary values like `grid-cols-[1fr_22rem]`.
+

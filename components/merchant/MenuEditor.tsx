@@ -61,7 +61,7 @@ export function MenuEditor({ shop, products, token }: { shop: Shop; products: Pr
   const saving = state.phase === "saving";
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[1fr_22rem]">
+    <div className="grid gap-10 lg:layout-sidebar">
       <section aria-labelledby="menu-heading" className="flex flex-col gap-8">
         <div className="flex flex-col gap-1">
           <h2 id="menu-heading" className="text-title font-bold">
@@ -77,7 +77,7 @@ export function MenuEditor({ shop, products, token }: { shop: Shop; products: Pr
         {groups.map(([category, groupItems]) => (
           <div key={category} className="flex flex-col gap-3">
             <h3 className="text-body-lg font-bold">{category}</h3>
-            <ul className="flex flex-col gap-3">
+            <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card shadow-ring">
               {groupItems.map((item) => (
                 <MenuItemRow key={item.id} item={item} onChange={update} />
               ))}

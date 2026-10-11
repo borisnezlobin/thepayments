@@ -9,7 +9,7 @@ export function MenuItemRow({ item, onChange }: { item: DraftItem; onChange: (ne
   const problem = itemProblem(item);
   const problemId = `${item.id}-problem`;
   return (
-    <li className={`flex gap-4 rounded-card p-4 transition-[background-color,opacity] duration-150 ${item.available ? "bg-surface shadow-ring" : "bg-surface-sunken"}`}>
+    <li className={`flex gap-4 p-4 transition-[background-color] duration-150 ${item.available ? "bg-surface" : "bg-surface-sunken"}`}>
       {item.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={item.imageUrl} alt="" className="size-16 shrink-0 rounded-control object-cover outline outline-1 -outline-offset-1 outline-black/10" />
