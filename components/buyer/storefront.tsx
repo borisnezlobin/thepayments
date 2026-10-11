@@ -6,36 +6,100 @@ import { Field } from "@/components/ui/Field";
 import { Ticket, TicketLine, TicketRule } from "@/components/ui/Ticket";
 import type { Principal } from "@/lib/buyer/auth";
 
+function QuantityField({
+  item,
+  quantity,
+}: {
+  item: MenuItem;
+  quantity: number;
+}) {
+  return (
+    <div className="quantity">
+      <Field
+        label="Quantity"
+        aria-label={`Quantity for ${item.name}`}
+        name={`qty_${item.productId}`}
+        type="number"
+        min={0}
+        max={20}
+        step={1}
+        defaultValue={quantity}
+      />
+    </div>
+  );
+}
+function PriceLine({ item }: { item: MenuItem }) {
+  return (
+    <span className="price-line">
+      <strong>{money(item.agentPriceCents)}</strong>
+      {item.agentPriceCents < item.priceCents && (
+        <span className="muted">
+          <s>{money(item.priceCents)}</s>
+          <span className="sr-only"> regular price</span>
+        </span>
+      )}
+    </span>
+  );
+}
 function MenuRow({ item, quantity }: { item: MenuItem; quantity: number }) {
   return (
     <article className="menu-item">
       <div>
         <h3>{item.name}</h3>
         <p className="muted">{item.description}</p>
-        <div className="price-line">
-          <strong>{money(item.agentPriceCents)}</strong>
-          {item.agentPriceCents < item.priceCents && (
-            <span className="muted">
-              <s>{money(item.priceCents)}</s>
-              <span className="sr-only"> regular price</span>
-            </span>
-          )}
-        </div>
+        <PriceLine item={item} />
       </div>
-      <div className="quantity">
-        <Field
-          label="Quantity"
-          aria-label={`Quantity for ${item.name}`}
-          name={`qty_${item.productId}`}
-          type="number"
-          min={0}
-          max={20}
-          step={1}
-          defaultValue={quantity}
-        />
-      </div>
+      <QuantityField item={item} quantity={quantity} />
     </article>
   );
+}
+// One dish with several sizes. Each size is still its own product to order.
+function DishRow({
+  name,
+  sizes,
+  quantities,
+}: {
+  name: string;
+  sizes: MenuItem[];
+  quantities: Record<string, number>;
+}) {
+  return (
+    <article className="menu-item dish">
+      <div>
+        <h3>{name}</h3>
+        <p className="muted">{sizes.find((s) => s.description)?.description}</p>
+      </div>
+      <ul className="size-list" aria-label={`Sizes of ${name}`}>
+        {sizes.map((item) => (
+          <li key={item.productId}>
+            <span className="size-name">{item.sizeLabel ?? item.name}</span>
+            <PriceLine item={item} />
+            <QuantityField
+              item={item}
+              quantity={quantities[item.productId] ?? 0}
+            />
+          </li>
+        ))}
+      </ul>
+    </article>
+  );
+}
+// Groups sizes that share a baseName, in menu order.
+export function groupDishes(items: MenuItem[]) {
+  const groups: { name: string; items: MenuItem[] }[] = [];
+  const byName = new Map<string, { name: string; items: MenuItem[] }>();
+  for (const item of items) {
+    const key = item.baseName ?? null;
+    const existing = key ? byName.get(key) : undefined;
+    if (existing) {
+      existing.items.push(item);
+      continue;
+    }
+    const group = { name: key ?? item.name, items: [item] };
+    if (key) byName.set(key, group);
+    groups.push(group);
+  }
+  return groups;
 }
 function OrderReceipt({
   menu,
@@ -190,13 +254,22 @@ export function Storefront({
               Choose quantities, then update your order to review the total.
             </p>
             <div className="menu-list">
-              {menu.items.map((p) => (
-                <MenuRow
-                  key={p.productId}
-                  item={p}
-                  quantity={quantities[p.productId] ?? 0}
-                />
-              ))}
+              {groupDishes(menu.items).map((group) =>
+                group.items.length > 1 ? (
+                  <DishRow
+                    key={group.items[0].productId}
+                    name={group.name}
+                    sizes={group.items}
+                    quantities={quantities}
+                  />
+                ) : (
+                  <MenuRow
+                    key={group.items[0].productId}
+                    item={group.items[0]}
+                    quantity={quantities[group.items[0].productId] ?? 0}
+                  />
+                ),
+              )}
             </div>
             {menu.items.length ? (
               <Button variant="quiet">Update order total</Button>
