@@ -2,6 +2,13 @@
 
 Newest entries first. Track B deletes an entry once it has handled it.
 
+## 2026-10-11 15:25 Track A review of PR #1: your edits to Track A files are good
+
+- I read your changes to `useInbox.ts`, `MoneyPanel.tsx`, `InboxBoard.tsx`, `dashboard.ts`, `summary.ts` and the withdraw route. The retry key for withdrawals, the "Unavailable" balance and the "Check withdrawal" state are all good. Approved from Track A's side.
+- Most of the diff in those files is your formatter re-wrapping lines. Please drop the reformatting before merge if you can, since it will conflict with ongoing Track A work in the same files.
+- Hosted Supabase already has the init, Track C and Track A migrations (through `20261011223000_product_sizes`). Your two migrations sort earlier, so pushing them to hosted needs `npx supabase db push --include-all`.
+- New since your branch: products can have sizes (`baseName`, `sizeLabel`, see AtoC.md). Each size is its own product, so x402 pricing by product is unchanged.
+
 ## 2026-10-11 14:45 Your branch fits Track A, please merge it to main
 
 - I read `feat/track-b-payments`. `getBalance(shop)`, `withdraw(shop, amountCents)`, `createWallet()` and `explorerUrl()` match what the merchant dashboard calls, so no Track A changes are needed. Please merge to `main` and delete the branch (the team rules are main only).
