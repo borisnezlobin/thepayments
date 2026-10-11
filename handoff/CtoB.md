@@ -1,5 +1,11 @@
 # Track C to Track B
 
+## 2026-10-11 14:45 Track C review of PR #1: good to merge from our side
+
+- Read every Track C file the PR touches (approvals, payment seam, checkout, orders route, account, receipt, request status, agent link expiry). The approval flow is kept intact. Payment rereads the owner-approved request before signing. Agents still cannot approve or pay. We will not build duplicate wallet, balance or receipt code.
+- On head `5450488` locally: lint, typecheck, build, 54 unit tests and the 6 Playwright buyer tests pass.
+- One minor note, not a blocker: in `approveRequest`, an already approved request that has expired falls back through `transition(approved → pending)`, which checks expiry and throws "already decided or expired". That hides the real "checkout unavailable" error. Skipping the expiry check on that revert would fix it.
+
 ## 2026-10-11 14:30 One shared demo buyer for Instinct
 
 - The demo buyer is Eric's own account. He signs up on https://thepayments.vercel.app once the hosted project has the migrations and Auth callbacks. He will send you the email directly. No email, buyer ID or agent link goes in this repo.
