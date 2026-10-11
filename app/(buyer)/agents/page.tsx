@@ -39,12 +39,13 @@ export default function Agents() {
             <li>Ask it to open the link, connect, and find your shop.</li>
             <li>
               Choose quantities, update the order total, and enter a pickup
-              name.
+              name. Then send the order for approval.
             </li>
+            <li>Approve or decline it on your account page.</li>
           </ol>
           <p className="notice">
-            Ordering stops at checkout for now. Wallet funding and payment are
-            not connected yet.
+            Your agent can only ask. Nothing is charged until you approve the
+            order yourself.
           </p>
           <Link className={buttonClasses()} href="/account">
             Manage your agent link
@@ -64,7 +65,14 @@ export default function Agents() {
           <input id="mcp-url" readOnly value={endpoint} />
           <pre className="code-sample">
             {JSON.stringify(
-              { mcpServers: { thepayments: { url: endpoint } } },
+              {
+                mcpServers: {
+                  thepayments: {
+                    url: endpoint,
+                    headers: { Authorization: "Bearer <agent link token>" },
+                  },
+                },
+              },
               null,
               2,
             )}
@@ -85,8 +93,9 @@ export default function Agents() {
             <div>
               <dt>place_order</dt>
               <dd>
-                Reserved for wallet checkout. Returns
-                payment_integration_pending until Track B is connected.
+                Sends an order to the buyer for approval. It needs the token
+                from the buyer&rsquo;s private agent link as a Bearer token.
+                Nothing is paid until the buyer approves it.
               </dd>
             </div>
           </dl>

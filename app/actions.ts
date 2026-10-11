@@ -6,6 +6,8 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { appOrigin, authConfigured, agentLinksConfigured } from "@/lib/config";
 import { ensureBuyer } from "@/lib/buyer/profile";
 import { requireOwner, resolveAgent } from "@/lib/buyer/auth";
+import { approveRequest, declineRequest } from "@/lib/buyer/approvals";
+import { IntegrationUnavailable, InvalidOrder } from "@/lib/errors";
 import {
   AGENT_COOKIE,
   AGENT_LINK_SECONDS,
@@ -144,4 +146,38 @@ export async function connectAgent(form: FormData) {
     maxAge: AGENT_LINK_SECONDS,
   });
   redirect("/shops?notice=connected");
+}
+const requestId = (form: FormData) => {
+  const parsed = z.string().uuid().safeParse(form.get("requestId"));
+  if (!parsed.success) fail("/account", "That order request was not found.");
+  return parsed.data;
+};
+function decisionError(error: unknown): never {
+  if (error instanceof InvalidOrder) fail("/account", error.message);
+  if (error instanceof IntegrationUnavailable)
+    fail(
+      "/account",
+      "Wallet checkout is not connected yet. The order is still waiting for you. Nothing was charged.",
+    );
+  throw error;
+}
+export async function approveOrderRequest(form: FormData) {
+  const owner = await requireOwner();
+  const id = requestId(form);
+  try {
+    await approveRequest(owner.buyerId, id);
+  } catch (error) {
+    decisionError(error);
+  }
+  redirect(`/account?notice=approved#approvals`);
+}
+export async function declineOrderRequest(form: FormData) {
+  const owner = await requireOwner();
+  const id = requestId(form);
+  try {
+    await declineRequest(owner.buyerId, id);
+  } catch (error) {
+    decisionError(error);
+  }
+  redirect(`/account?notice=declined#approvals`);
 }

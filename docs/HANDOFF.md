@@ -14,9 +14,15 @@ The additive migration introduces only `track_c_agent_links`, referencing the ex
 
 The team's minimal local stack excludes Auth. See TRACK_C.md for the account-test startup command. No new password column is needed. Production Supabase signup rate limits apply; no custom password storage is implemented.
 
+## Agent orders wait for the buyer's approval
+
+Agents never pay by themselves. When an agent session (browser cookie from the agent link, or the agent link token as an MCP Bearer token) places an order, `lib/buyer/approvals.ts` prices it from the live menu, checks `expectedTotalCents`, and stores it in `track_c_order_requests` as `pending` for 30 minutes. The same buyer and idempotency key always return the same request.
+
+The signed-in owner sees pending requests on `/account` and approves or declines each one. Approval moves the row from `pending` to `approved` with a conditional update, so a double tap or a second device cannot pay twice. Only then is `payApprovedRequest` in `lib/buyer/payment.ts` called. A browser agent is redirected to `/requests/:id`, which shows the request's state.
+
 ## Payment seam: deliberately disabled
 
-`lib/buyer/checkout.ts` is Track C's future orchestration entry point. It always throws `IntegrationUnavailable('payments')`. Track C does not import or execute `lib/payments`, except transitively through the unmodified Track A repository's read functions (which do not invoke payment functions).
+`lib/buyer/payment.ts` is where Track B's `payX402` connects, with `checkoutEnabled` beside it. It always throws `IntegrationUnavailable('payments')`, and an approval that hits it is returned to `pending`. The owner's own checkout in `lib/buyer/checkout.ts` also still throws. Track C does not import or execute `lib/payments`, except transitively through the unmodified Track A repository's read functions (which do not invoke payment functions).
 
 `POST /api/buyer/orders` accepts JSON or HTML form data:
 
@@ -44,9 +50,9 @@ Before enabling checkout:
 
 ## MCP authorization before payments
 
-`find_shops` and `get_menu` are public reads. `place_order` currently returns `isError: true` with `payment_integration_pending`; it cannot spend.
+`find_shops` and `get_menu` are public reads. `place_order` requires the buyer's agent link token as a Bearer token, resolved through the same expiry and revocation rules as the browser. It only creates an approval request and returns `awaiting_approval`. It cannot spend.
 
-Before wiring the environment-configured backup wallet, require scoped authentication for `place_order`, bind it to the intended buyer/wallet, and add limits and durable idempotency. Never expose a funded shared wallet to anonymous callers. This version accepts no MCP private key and implements no OAuth authorization server.
+Before any MCP path pays from a wallet, keep the owner approval step in front of it, and add limits. Never expose a funded shared wallet to anonymous callers. This version accepts no MCP private key and implements no OAuth authorization server.
 
 ## Boundaries verified locally
 

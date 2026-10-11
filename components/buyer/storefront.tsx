@@ -52,6 +52,7 @@ function OrderReceipt({
     ? quote(menu, items)
     : { subtotalCents: 0, discountCents: 0, totalCents: 0 };
   const products = new Map(menu.items.map((item) => [item.productId, item]));
+  const isAgent = principal?.kind === "agent";
   return (
     <aside className="receipt" aria-labelledby="order-heading">
       <Ticket tone="fresh">
@@ -106,9 +107,15 @@ function OrderReceipt({
             maxLength={80}
             placeholder="What should we call out?"
           />
-          <Button size="lg" className="w-full" disabled>
-            Pay {money(totals.totalCents)} from wallet
-          </Button>
+          {isAgent ? (
+            <Button size="lg" className="w-full" disabled={!items.length}>
+              Send {money(totals.totalCents)} order for approval
+            </Button>
+          ) : (
+            <Button size="lg" className="w-full" disabled>
+              Pay {money(totals.totalCents)} from wallet
+            </Button>
+          )}
         </form>
         {!principal && (
           <p className="small">
@@ -121,7 +128,9 @@ function OrderReceipt({
           </p>
         )}
         <p className="small muted">
-          Wallet checkout is not available yet. No payment will be taken.
+          {isAgent
+            ? "The account owner approves every agent order before anything is charged."
+            : "Wallet checkout is not available yet. No payment will be taken."}
         </p>
       </Ticket>
     </aside>
@@ -162,8 +171,8 @@ export function Storefront({
       </header>
       {affiliatedDemo && (
         <p className="notice">
-          This demo storefront is not affiliated with Ladle &amp; Leaf. No real café
-          order will be placed.
+          This demo storefront is not affiliated with Ladle &amp; Leaf. No real
+          café order will be placed.
         </p>
       )}
       <div className="checkout-grid">

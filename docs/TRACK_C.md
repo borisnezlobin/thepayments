@@ -10,7 +10,8 @@ This work follows the team README, AGENTS.md, shared `lib/contract.ts`, shared p
 - Email/password signup, confirmation, login, logout, and verified `buyers` profile provisioning through Supabase Auth. Passwords belong to Supabase Auth, so no password column is added to `buyers`. A verified user's UUID becomes `buyers.id`; the existing wallet address is preserved.
 - Random 256-bit private agent links with 30-day expiration, rotation, and revocation. Only SHA-256 hashes are stored. Agents cannot access account management or generate new links. Revocation invalidates the link and existing agent cookies on the next request.
 - `/agents`, `/llms.txt`, JSON menu discovery links, and `/mcp` Streamable HTTP. A browser opening `/mcp` is directed to the styled connection instructions.
-- Public MCP `find_shops` and `get_menu` tools. `place_order` explicitly returns `payment_integration_pending`, never a paid result.
+- Public MCP `find_shops` and `get_menu` tools. `place_order` needs the agent link token as a Bearer token and returns `awaiting_approval`, never a paid result.
+- Every agent order waits for the buyer. Pending requests appear on `/account` with Approve and Decline. The new `*_track_c_order_approvals.sql` migration is additive.
 
 ## Intentionally waiting for Track B
 
