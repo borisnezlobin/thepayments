@@ -7,8 +7,7 @@ import { listProducts, publishShop, saveProductEdits, updateShopDetails } from "
 const productEditSchema = z.object({
   id: z.uuid(),
   name: z.string().trim().min(1, "Every item needs a name.").max(120),
-  // Imported descriptions are stored in full; saving must accept the same text.
-  description: z.string().trim().nullable(),
+  description: z.string().trim().max(5000).nullable(),
   priceCents: z.number().int().min(0).max(100000),
   available: z.boolean(),
   baseName: z.string().trim().min(1).max(120).nullable().optional(),
