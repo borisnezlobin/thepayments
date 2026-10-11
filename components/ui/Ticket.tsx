@@ -18,7 +18,7 @@ export function TicketLine({ label, value, emphasis = false }: { label: ReactNod
   return (
     <div className={`flex items-baseline justify-between gap-4 ${emphasis ? "text-body font-semibold text-ink" : "text-body-sm text-ink-muted"}`}>
       <span>{label}</span>
-      <span className="tabular text-ink">{value}</span>
+      <span className="tabular whitespace-nowrap text-ink">{value}</span>
     </div>
   );
 }
