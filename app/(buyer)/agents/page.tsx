@@ -38,14 +38,21 @@ export default function Agents() {
             <li>Create a private agent link and send it to your agent.</li>
             <li>Ask it to open the link, connect, and find your shop.</li>
             <li>
-              Choose quantities, update the order total, and enter a pickup
-              name. Then send the order for approval.
+              If your agent keeps logins in a vault, save the access token there
+              instead. It pastes the token at{" "}
+              <Link href="/agents/connect">Connect your agent</Link>.
             </li>
-            <li>Approve or decline it on your account page.</li>
+            <li>
+              Choose quantities, update the order total and enter a pickup name.
+              Then place the order.
+            </li>
+            <li>
+              Your agent pays from your funded wallet and lands on the receipt.
+            </li>
           </ol>
           <p className="notice">
-            Your agent can only ask. Nothing is charged until you approve the
-            order yourself.
+            Each order is capped by your per-order spending limit. Your agent
+            can&rsquo;t open your account settings or withdraw money.
           </p>
           <Link className={buttonClasses()} href="/account">
             Manage your agent link
@@ -69,7 +76,7 @@ export default function Agents() {
                 mcpServers: {
                   thepayments: {
                     url: endpoint,
-                    headers: { Authorization: "Bearer <agent link token>" },
+                    headers: { Authorization: "Bearer <agent access token>" },
                   },
                 },
               },
@@ -93,9 +100,9 @@ export default function Agents() {
             <div>
               <dt>place_order</dt>
               <dd>
-                Sends an order to the buyer for approval. It needs the token
-                from the buyer&rsquo;s private agent link as a Bearer token.
-                Nothing is paid until the buyer approves it.
+                Pays for an order from the buyer&rsquo;s funded wallet. It needs
+                the buyer&rsquo;s agent access token as a Bearer token. Report
+                an order as paid only when its status is paid.
               </dd>
             </div>
           </dl>

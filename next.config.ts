@@ -12,9 +12,16 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
         ],
       },
+      // strict-origin keeps the token path out of every referrer. no-referrer
+      // would also make the browser send "Origin: null" on the connect form,
+      // which Next.js rejects as a cross-site Server Action.
       {
         source: "/agent/:path*",
-        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+        headers: [{ key: "Referrer-Policy", value: "strict-origin" }],
+      },
+      {
+        source: "/agents/connect",
+        headers: [{ key: "Referrer-Policy", value: "strict-origin" }],
       },
       {
         source: "/m/:path*",
