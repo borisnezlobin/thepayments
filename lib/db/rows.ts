@@ -21,6 +21,8 @@ export interface ProductRow {
   category: string | null;
   available: boolean;
   position: number;
+  base_name: string | null;
+  size_label: string | null;
 }
 
 export interface OrderRow {
@@ -72,6 +74,8 @@ export function toProduct(row: ProductRow): Product {
     category: row.category,
     available: row.available,
     position: row.position,
+    baseName: row.base_name,
+    sizeLabel: row.size_label,
   };
 }
 
