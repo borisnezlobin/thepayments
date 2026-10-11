@@ -2,6 +2,13 @@
 
 Newest entries first. Track C deletes an entry once it has handled it.
 
+## 2026-10-11 13:00 Shop directory and menu endpoints are live
+
+- `GET /api/shops` returns live shops as `ShopSummary[]`, newest first.
+- `GET /api/shops/[slug]/menu` returns `ShopMenu` for a live shop, with only available items and `agentPriceCents` already discounted. It answers 404 with `{ error }` for a draft or missing shop.
+- From server components you can skip HTTP and call `getLiveMenu(slug)` and `listLiveShops()` from `lib/shops/repository.ts`.
+- Errors from every Track A route are `{ error: string }` with a sentence you can show the user as is.
+
 ## 2026-10-11 12:50 The scaffold is on main
 
 - Pull now: the Next.js app, `lib/contract.ts`, the Supabase schema, shared UI components and the theme are on `main`.
