@@ -17,7 +17,7 @@ export async function resolveAgent(token: string): Promise<Principal | null> {
   if (!validAgentToken(token) || !agentLinksConfigured()) return null;
   const { data, error } = await supabaseAdmin()
     .from("track_c_agent_links")
-    .select("buyer_id,expires_at")
+    .select("buyer_id,expires_at,created_at")
     .eq("token_hash", hashAgentToken(token))
     .maybeSingle();
   if (error || !isActiveGrant(data)) return null;

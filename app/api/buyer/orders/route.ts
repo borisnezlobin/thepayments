@@ -1,8 +1,12 @@
+import { buyerOrder } from "@/lib/payments/buyer";
 import { getPrincipal } from "@/lib/buyer/auth";
 import { placeBuyerOrder } from "@/lib/buyer/checkout";
 import { checkoutSchema } from "@/lib/buyer/schemas";
 import { appOrigin } from "@/lib/config";
 import { IntegrationUnavailable, InvalidOrder } from "@/lib/errors";
+import { PaymentError } from "@/lib/payments/validation";
+import { checkoutRetryResponse } from "@/lib/payments/checkout-response";
+export const maxDuration = 60;
 const noStore = { "Cache-Control": "no-store" };
 async function readBody(request: Request, type: string): Promise<unknown> {
   if (type.includes("application/json")) return request.json();
@@ -16,6 +20,11 @@ async function readBody(request: Request, type: string): Promise<unknown> {
   };
 }
 function failure(error: unknown) {
+  if (error instanceof PaymentError)
+    return Response.json(
+      { error: error.message },
+      { status: error.status, headers: noStore },
+    );
   if (error instanceof InvalidOrder)
     return Response.json(
       { error: "invalid_order", message: error.message },
@@ -26,11 +35,57 @@ function failure(error: unknown) {
       {
         error: "payment_integration_pending",
         message:
-          "Wallet checkout is not connected. No payment was taken and no order was created.",
+          "Wallet checkout is unavailable. Check previous orders before retrying.",
       },
       { status: 503, headers: noStore },
     );
   return Response.json({ error: "order_failed" }, { status: 500 });
+}
+function formFailure(
+  input: import("@/lib/buyer/schemas").CheckoutInput,
+  error: unknown,
+) {
+  return checkoutRetryResponse(
+    input,
+    error instanceof PaymentError
+      ? error.message
+      : "Payment status is uncertain. Retry this same checkout safely.",
+    error instanceof PaymentError ? error.status : 503,
+  );
+}
+async function checkoutResponse(
+  result: Awaited<ReturnType<typeof placeBuyerOrder>>,
+  buyerId: string,
+  isForm: boolean,
+) {
+  if ("id" in result) {
+    if (isForm)
+      return Response.redirect(`${appOrigin()}/orders/${result.id}`, 303);
+    return Response.json(result, { headers: noStore });
+  }
+  const held = result.request;
+  if (held.status === "paid" && held.orderId) {
+    const paid = await buyerOrder(buyerId, held.orderId);
+    if (paid)
+      return isForm
+        ? Response.redirect(`${appOrigin()}/orders/${paid.id}`, 303)
+        : Response.json(paid, { headers: noStore });
+  }
+  const statusUrl = `${appOrigin()}/requests/${held.id}`;
+  // A browser agent lands on a page it can read. API clients get JSON.
+  if (isForm) return Response.redirect(statusUrl, 303);
+  return Response.json(
+    {
+      status: "awaiting_approval",
+      requestId: held.id,
+      totalCents: held.totalCents,
+      expiresAt: held.expiresAt,
+      statusUrl,
+      message:
+        "The account owner must approve this order. No payment has been taken yet.",
+    },
+    { status: 202, headers: noStore },
+  );
 }
 export async function POST(request: Request) {
   if (request.headers.get("origin") !== appOrigin())
@@ -60,23 +115,11 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   try {
-    const { request: held } = await placeBuyerOrder(principal, parsed.data);
-    const statusUrl = `${appOrigin()}/requests/${held.id}`;
-    // A browser agent lands on a page it can read. API clients get JSON.
-    if (isForm) return Response.redirect(statusUrl, 303);
-    return Response.json(
-      {
-        status: "awaiting_approval",
-        requestId: held.id,
-        totalCents: held.totalCents,
-        expiresAt: held.expiresAt,
-        statusUrl,
-        message:
-          "The account owner must approve this order. No payment has been taken yet.",
-      },
-      { status: 202, headers: noStore },
-    );
+    const result = await placeBuyerOrder(principal, parsed.data);
+    return checkoutResponse(result, principal.buyerId, isForm);
   } catch (error) {
+    if (isForm && principal.kind === "owner")
+      return formFailure(parsed.data, error);
     return failure(error);
   }
 }

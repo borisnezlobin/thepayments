@@ -128,7 +128,14 @@ export async function requestApproval(
   if (readError || !data) throw new IntegrationUnavailable("account");
   if (
     data.shop_slug !== snapshot.shop_slug ||
-    data.total_cents !== snapshot.total_cents
+    data.total_cents !== snapshot.total_cents ||
+    data.pickup_name !== snapshot.pickup_name ||
+    JSON.stringify(
+      data.items.map(({ productId, qty }) => ({ productId, qty })),
+    ) !==
+      JSON.stringify(
+        snapshot.items.map(({ productId, qty }) => ({ productId, qty })),
+      )
   )
     throw new InvalidOrder(
       "That order key was already used for another order.",
@@ -150,8 +157,9 @@ export async function pendingRequests(buyerId: string) {
     .from(TABLE)
     .select(COLUMNS)
     .eq("buyer_id", buyerId)
-    .eq("status", "pending")
-    .gt("expires_at", new Date().toISOString())
+    .or(
+      `status.eq.approved,and(status.eq.pending,expires_at.gt.${new Date().toISOString()})`,
+    )
     .order("created_at", { ascending: false })
     .limit(20)
     .returns<RequestRow[]>();
@@ -187,13 +195,19 @@ export async function declineRequest(buyerId: string, id: string) {
   await transition(buyerId, id, "pending", "declined");
 }
 export async function approveRequest(buyerId: string, id: string) {
-  const request = await transition(buyerId, id, "pending", "approved");
+  const existing = await getRequest(buyerId, id);
+  if (!existing) throw new InvalidOrder("This order request was not found.");
+  const request =
+    existing.status === "approved" || existing.status === "paid"
+      ? existing
+      : await transition(buyerId, id, "pending", "approved");
   try {
-    const order = await payApprovedRequest(request);
+    const order = await payApprovedRequest(buyerId, request);
     await supabaseAdmin()
       .from(TABLE)
       .update({ status: "paid", order_id: order.id })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("buyer_id", buyerId);
     return order;
   } catch (error) {
     // Payments are not connected: hand the request back so it can be approved later.

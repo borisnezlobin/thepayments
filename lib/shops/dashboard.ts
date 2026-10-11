@@ -1,7 +1,12 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { getBalance } from "../payments";
-import { findShopByToken, listInboxOrders, listProducts, listWithdrawals } from "./repository";
+import {
+  findShopByToken,
+  listInboxOrders,
+  listProducts,
+  listWithdrawals,
+} from "./repository";
 import { summarizeSales, type InboxResponse } from "./summary";
 
 export async function loadDashboardShop(token: string) {
@@ -16,6 +21,10 @@ export async function loadMenuEditor(token: string) {
 }
 
 export async function loadInbox(shopId: string): Promise<InboxResponse> {
-  const [orders, balanceCents, withdrawals] = await Promise.all([listInboxOrders(shopId), getBalance({ id: shopId }), listWithdrawals(shopId)]);
+  const [orders, balanceCents, withdrawals] = await Promise.all([
+    listInboxOrders(shopId),
+    getBalance({ id: shopId }).catch(() => null),
+    listWithdrawals(shopId),
+  ]);
   return { orders, summary: summarizeSales(orders), balanceCents, withdrawals };
 }

@@ -1,5 +1,6 @@
 import { LogoMark } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
+import { browserCheckoutEnabled } from "@/lib/payments/buyer";
 import { resolveAgent } from "@/lib/buyer/auth";
 import { connectAgent } from "@/app/actions";
 import { StatusPanel } from "@/components/buyer/status-panel";
@@ -39,12 +40,13 @@ export default async function AgentLink({
         <p className="lead">Connect to place pickup orders for this buyer.</p>
         <ul className="permission-list">
           <li>Browse shops and menus</li>
-          <li>Place wallet orders when checkout opens</li>
+          <li>Place orders from the buyer’s funded wallet</li>
           <li>No account settings or withdrawals</li>
         </ul>
         <p className="muted">
-          This will put this browser in an ordering-only session. Wallet
-          checkout is not available yet.
+          {browserCheckoutEnabled()
+            ? "This browser can place purchases from the buyer’s existing wallet within the checkout spending limit. Each order waits for the buyer to approve it on their account page before payment."
+            : "This browser can browse menus. Wallet checkout is not enabled yet."}
         </p>
         <form action={connectAgent}>
           <input type="hidden" name="token" value={token} />
