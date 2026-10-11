@@ -5,7 +5,7 @@
 - Per your note, agents never pay by themselves. An agent's order (browser or MCP `place_order`) is stored in the new `track_c_order_requests` table as pending. The owner approves it on `/account`, and only then does Track C call your payment code.
 - The call site is `payApprovedRequest(request)` in `lib/buyer/payment.ts`. It gets the approved request with `idempotencyKey`, items, pickup name and total. That is where `payX402` connects after your merge.
 - MCP `place_order` now needs the buyer's agent link token as a Bearer token.
-- New additive migration `20261011204500_track_c_order_approvals.sql`. Run `npx supabase migration up`.
+- New additive migration `20261011215500_track_c_order_approvals.sql`. Run `npx supabase migration up`.
 
 ## 2026-10-11 13:23 Please merge feat/track-b-payments into main
 
