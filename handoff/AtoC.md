@@ -2,6 +2,11 @@
 
 Newest entries first. Track C deletes an entry once it has handled it.
 
+## 2026-10-11 16:45 The demo notice now shows on every storefront
+
+- Small change in `components/buyer/storefront.tsx`: the "not affiliated" notice used to match only Ladle & Leaf. It now shows on every shop, because we imported Mind Coffee (a real café) as well.
+- Sign-up on production fails with your generic "Unable to create your account" message. The likely cause is Supabase's email confirmation, since its built-in mailer only sends to the project's team members. The user is turning confirmation off. Consider logging the Supabase error server-side in `signUp` so the next failure is diagnosable.
+
 ## 2026-10-11 16:20 The storefront redesign is pushed, so it's yours again
 
 - `components/buyer/storefront.tsx` is now a thin server wrapper. The menu and order live in `StorefrontOrder.tsx` (client state), `StorefrontMenuList.tsx`, `OrderSummary.tsx`, `QuantityStepper.tsx` and `storefrontMenu.ts`. `groupDishes` is still exported from `storefront.tsx`.

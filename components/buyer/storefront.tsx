@@ -7,8 +7,6 @@ import { StorefrontOrder } from "./StorefrontOrder";
 
 export { groupDishes } from "./storefrontMenu";
 
-const DEMO_SHOP_PATTERN = /ladle\s*(?:&|and)\s*leaf/i;
-
 export function Storefront({
   menu,
   quantities,
@@ -34,11 +32,9 @@ export function Storefront({
         <p className="text-body-lg text-ink-muted">
           Order ahead for pickup. Agents pay <span className="font-semibold text-ink">{shop.agentDiscountPct}% less</span> than the menu price.
         </p>
-        {DEMO_SHOP_PATTERN.test(shop.name) ? (
-          <p className="self-start rounded-control bg-surface-sunken px-4 py-2 text-body-sm text-ink-muted">
-            This demo storefront isn&rsquo;t affiliated with Ladle &amp; Leaf. No real café order is placed.
-          </p>
-        ) : null}
+        <p className="self-start rounded-control bg-surface-sunken px-4 py-2 text-body-sm text-ink-muted">
+          This is a hackathon demo built from {shop.name}&rsquo;s public menu. It isn&rsquo;t affiliated with {shop.name}. No real order reaches the shop.
+        </p>
         {menuUrl ? (
           <a href={menuUrl} className="self-start text-body-sm text-accent-ink">
             Menu as JSON for agents
