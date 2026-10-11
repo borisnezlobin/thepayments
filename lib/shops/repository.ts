@@ -61,6 +61,8 @@ async function insertProducts(shopId: string, drafts: DraftProduct[]): Promise<P
     category: draft.category,
     available: draft.available,
     position,
+    base_name: draft.baseName,
+    size_label: draft.sizeLabel,
   }));
   const inserted = orThrow(await db().from("products").insert(rows).select()) as ProductRow[];
   return inserted.map(toProduct).sort((a, b) => a.position - b.position);
@@ -111,6 +113,8 @@ export async function getLiveMenu(slug: string): Promise<ShopMenu | null> {
       category: product.category,
       priceCents: product.priceCents,
       agentPriceCents: agentPriceCents(product.priceCents, shop.agentDiscountPct),
+      baseName: product.baseName,
+      sizeLabel: product.sizeLabel,
     }));
   return { shop: { slug: shop.slug, name: shop.name, agentDiscountPct: shop.agentDiscountPct }, items };
 }
@@ -123,13 +127,20 @@ export async function updateShopDetails(shop: Shop, changes: { name?: string; ag
   return toShop(orThrow(await db().from("shops").update(patch).eq("id", shop.id).select().single<ShopRow>()));
 }
 
+function productEditRow(edit: ProductEdit) {
+  const row: Partial<ProductRow> = { name: edit.name, description: edit.description, price_cents: edit.priceCents, available: edit.available };
+  if (edit.baseName !== undefined) row.base_name = edit.baseName;
+  if (edit.sizeLabel !== undefined) row.size_label = edit.sizeLabel;
+  return row;
+}
+
 export async function saveProductEdits(shopId: string, edits: ProductEdit[]) {
   await Promise.all(
     edits.map(async (edit) =>
       orThrow(
         await db()
           .from("products")
-          .update({ name: edit.name, description: edit.description, price_cents: edit.priceCents, available: edit.available })
+          .update(productEditRow(edit))
           .eq("id", edit.id)
           .eq("shop_id", shopId),
       ),

@@ -20,7 +20,12 @@ async function importShop(url: string): Promise<ImportShopResponse> {
   return body;
 }
 
-export function ImportForm() {
+const STATUS_TONE = {
+  light: { idle: "text-ink-muted", failed: "text-danger" },
+  dark: { idle: "text-surface/80", failed: "font-semibold text-surface" },
+} as const;
+
+export function ImportForm({ tone = "light" }: { tone?: keyof typeof STATUS_TONE }) {
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [state, setState] = useState<ImportState>({ phase: "idle" });
@@ -62,7 +67,7 @@ export function ImportForm() {
           {reading ? "Reading your menu" : "Build my storefront"}
         </Button>
       </div>
-      <p id="shop-url-status" role="status" className={`min-h-5 px-2 text-body-sm ${state.phase === "failed" ? "text-danger" : "text-ink-muted"}`}>
+      <p id="shop-url-status" role="status" className={`min-h-5 px-2 text-body-sm ${state.phase === "failed" ? STATUS_TONE[tone].failed : STATUS_TONE[tone].idle}`}>
         {state.phase === "failed" ? state.message : reading ? "This usually takes 15 to 30 seconds." : "Paste the page that lists your menu and prices."}
       </p>
     </form>
