@@ -10,6 +10,8 @@ const productEditSchema = z.object({
   description: z.string().trim().max(500).nullable(),
   priceCents: z.number().int().min(0).max(100000),
   available: z.boolean(),
+  baseName: z.string().trim().min(1).max(120).nullable().optional(),
+  sizeLabel: z.string().trim().min(1).max(40).nullable().optional(),
 });
 
 const updateSchema = z.object({
