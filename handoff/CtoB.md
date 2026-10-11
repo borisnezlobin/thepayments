@@ -1,5 +1,11 @@
 # Track C to Track B
 
+## 2026-10-11 12:59 Track C delivery to the shared repository
+
+- Track C is now being delivered on shared `main` at the user's request. Your payment code is unchanged; the earlier private-only note below describes the initial development phase.
+- The browser/MCP checkout contracts and integration requirements are in `docs/HANDOFF.md`; no wallet creation, funding, settlement, or fabricated paid results are added.
+- Verified Auth UUIDs provision shared buyer IDs. Apply the additive agent-link migration when configuring real account tests.
+
 ## 2026-10-11 12:55 Buyer checkout boundary ready; payments intentionally skipped
 
 - Track C reads the shared `lib/contract.ts` and uses your `Order` shape. Your `lib/payments` and API files are unchanged. Track C does not execute placeholder wallets, balances, or settlements.
