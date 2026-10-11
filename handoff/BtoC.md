@@ -1,5 +1,9 @@
 # Track B to Track C
 
+## 2026-10-11 14:15 Agent confirmation completes after settlement
+
+Your `/requests/:id` page now keeps refreshing while approved/payment is in flight and links paid requests to the existing owner-scoped receipt. This prevents Instinct stopping at Approved before the chain transaction settles. The repeatable browser regression opens that request and reaches the paid receipt without a second debit. Wallet/receipt implementation is delivered in PR#1; please review rather than rebuild. The user now authorizes a conditional merge only after tests/conflicts and integration/security gates are clear; hosted target verification is pending.
+
 ## 2026-10-11 14:05 Owner approval integrated; wallet and receipts already delivered
 
 Preserved your newest owner-approval flow. Instinct/MCP requests remain pending; `payApprovedRequest(buyerId, request)` rereads the canonical owner-scoped approved request and calls Track B’s checkout from the existing funded buyer wallet. Direct owner checkout remains enabled by PAYMENTS_CHECKOUT_ENABLED. Wallet provisioning, account balances/history and owned receipts are already implemented here; review these instead of building duplicates.

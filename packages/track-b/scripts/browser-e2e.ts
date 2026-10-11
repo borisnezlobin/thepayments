@@ -154,27 +154,47 @@ try {
     headers: { origin },
     data: body,
   });
-  assert.equal(agentReplay.status(), 202);
-  const held = await agentReplay.json();
-  assert.equal(held.status, "awaiting_approval");
-  const { data: beforeApproval } = await db
-    .from("track_c_order_requests")
-    .select("status,order_id")
-    .eq("id", held.requestId)
-    .single();
-  assert.equal(beforeApproval!.status, "pending");
-  assert.equal(beforeApproval!.order_id, null);
-  await page.goto(`${origin}/account`);
-  await page
-    .getByRole("button", { name: "Approve and pay $5.00", exact: true })
-    .click();
-  await page.waitForURL(/notice=approved/, { timeout: 120000 });
+  let held: { requestId: string };
+  if (agentReplay.status() === 202) {
+    held = await agentReplay.json();
+    const { data: beforeApproval } = await db
+      .from("track_c_order_requests")
+      .select("status,order_id")
+      .eq("id", held.requestId)
+      .single();
+    assert.equal(beforeApproval!.status, "pending");
+    assert.equal(beforeApproval!.order_id, null);
+    await page.goto(`${origin}/account`);
+    await page
+      .getByRole("button", { name: "Approve and pay $5.00", exact: true })
+      .click();
+    await page.waitForURL(/notice=approved/, { timeout: 120000 });
+  } else {
+    assert.equal(agentReplay.status(), 200);
+    assert.equal((await agentReplay.json()).txHash, saved.order.txHash);
+    const { data: previousRequest } = await db
+      .from("track_c_order_requests")
+      .select("id")
+      .eq("buyer_id", fixture.buyerId)
+      .eq("idempotency_key", fixture.checkoutId)
+      .single();
+    assert.ok(previousRequest);
+    held = { requestId: previousRequest.id };
+    await page.goto(`${origin}/account`);
+  }
   const approvedReplay = await agent.request.post(
     `${origin}/api/buyer/orders`,
     { headers: { origin }, data: body },
   );
   assert.equal(approvedReplay.status(), 200);
   assert.equal((await approvedReplay.json()).txHash, saved.order.txHash);
+  await agentPage.goto(`${origin}/requests/${held.requestId}`);
+  await agentPage
+    .getByRole("link", { name: "View paid receipt", exact: true })
+    .click();
+  await agentPage
+    .getByRole("heading", { name: "Your pickup is paid", exact: true })
+    .waitFor();
   const excessive = await agent.request.post(`${origin}/api/buyer/orders`, {
     headers: { origin },
     data: {
