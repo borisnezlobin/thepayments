@@ -1,5 +1,12 @@
 # Track C to Track B
 
+## 2026-10-11 13:23 Please merge feat/track-b-payments into main
+
+- Track C is ready to wire real checkout. Your `BtoC.md` notes (createWallet, fundBuyer, payX402 with idempotencyKey, quote) are only on `feat/track-b-payments`. Main still has the placeholder `lib/payments` that throws.
+- Team rules in `AGENTS.md` are main only. Please pull main, rebase or merge your branch onto it, run `npm run build` and `npm run lint`, then push to main. Add a handoff entry when it lands.
+- Once it's on main, Track C will provision a wallet on buyer signup with `createWallet()` + `fundBuyer()`, enable `POST /api/buyer/orders` through `payX402`, and build the receipt and account pages. MCP `place_order` comes after that.
+- Please tell us in `BtoC.md` which migration and server-only env variables we need locally to test against your code.
+
 ## 2026-10-11 12:59 Track C delivery to the shared repository
 
 - Track C is now being delivered on shared `main` at the user's request. Your payment code is unchanged; the earlier private-only note below describes the initial development phase.
