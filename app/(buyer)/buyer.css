@@ -1,0 +1,310 @@
+@reference '../globals.css';
+
+@layer components {
+  .buyer-site {
+    @apply bg-surface text-body text-ink;
+  }
+  .buyer-site h1 {
+    @apply text-display font-semibold md:text-display-xl;
+  }
+  .buyer-site h2 {
+    @apply text-title font-semibold;
+  }
+  .buyer-site h3 {
+    @apply text-body-lg font-semibold;
+  }
+  .buyer-site p {
+    @apply max-w-prose;
+  }
+  .buyer-site a {
+    @apply text-accent-ink underline-offset-4 hover:underline;
+  }
+  .buyer-site button {
+    @apply cursor-pointer;
+  }
+  .buyer-site button:disabled {
+    @apply cursor-not-allowed;
+  }
+  .buyer-site input,
+  .buyer-site textarea {
+    @apply min-w-0 rounded-control border border-line bg-surface px-3.5 py-3 text-ink;
+  }
+  .buyer-site input:disabled {
+    @apply bg-surface-sunken;
+  }
+  .buyer-site label {
+    @apply grid gap-2 font-medium;
+  }
+  .buyer-site .skip-link {
+    @apply absolute -top-24 z-50 bg-surface p-3 focus:top-2;
+  }
+  .buyer-site .site-header {
+    @apply mx-auto flex min-h-24 max-w-7xl flex-col items-start justify-between sm:flex-row sm:items-center gap-6 px-6 py-5 md:px-12;
+  }
+  .buyer-site nav {
+    @apply flex w-full flex-wrap items-center justify-start gap-4 sm:w-auto sm:justify-end text-body-sm md:gap-7;
+  }
+  .buyer-site nav > a {
+    @apply text-ink;
+  }
+  .buyer-site .text-button {
+    @apply bg-transparent py-2 text-accent-ink underline underline-offset-4;
+  }
+  .buyer-site .danger {
+    @apply text-danger;
+  }
+  .buyer-site .page {
+    @apply mx-auto max-w-6xl px-5 py-10 md:px-8 md:pb-20;
+  }
+  .buyer-site .page.narrow {
+    @apply min-h-96 max-w-3xl py-16;
+  }
+  .buyer-site .lead {
+    @apply mt-6 max-w-xl text-body-lg text-ink-muted;
+  }
+  .buyer-site .muted {
+    @apply text-ink-muted;
+  }
+  .buyer-site .small,
+  .buyer-site .field-hint {
+    @apply text-body-sm;
+  }
+  .buyer-site .field-hint {
+    @apply font-normal text-ink-muted;
+  }
+  .buyer-site .directory-hero {
+    @apply grid items-center gap-10 py-8 pb-14 md:grid-cols-2;
+  }
+  .buyer-site .inline-link {
+    @apply mt-6 inline-block font-medium;
+  }
+  .buyer-site .coffee-art {
+    @apply mx-auto hidden size-72 items-center justify-center rounded-full bg-accent-wash text-accent-ink md:flex;
+  }
+  .buyer-site .section-heading {
+    @apply mb-7 flex flex-col justify-between gap-6 md:flex-row md:items-center;
+  }
+  .buyer-site .search-form {
+    @apply flex w-full gap-2 md:w-96;
+  }
+  .buyer-site .search-form input {
+    @apply w-full text-body-sm;
+  }
+  .buyer-site .status-panel {
+    @apply rounded-card bg-surface-sunken px-6 py-12 text-center;
+  }
+  .buyer-site .status-panel h2 {
+    @apply mb-3;
+  }
+  .buyer-site .status-panel p {
+    @apply mx-auto mb-4 max-w-xl;
+  }
+  .buyer-site .status-panel .status-symbol {
+    @apply mx-auto mb-5 text-accent-ink;
+  }
+  .buyer-site .directory-note {
+    @apply mt-12 grid items-center gap-6 py-8 md:grid-cols-2 md:gap-16;
+  }
+  .buyer-site .directory-note p {
+    @apply text-body-lg text-ink-muted;
+  }
+  .buyer-site .site-footer {
+    @apply mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 border-t border-line px-6 py-8 text-caption text-ink-muted;
+  }
+  .buyer-site .site-footer > a:first-child {
+    @apply text-body-lg font-semibold text-ink;
+  }
+  .buyer-site .shop-grid {
+    @apply grid gap-6 sm:grid-cols-2 lg:grid-cols-3;
+  }
+  .buyer-site .shop-card {
+    @apply overflow-hidden rounded-card bg-surface text-ink no-underline shadow-card hover:shadow-raised;
+  }
+  .buyer-site .shop-monogram {
+    @apply grid h-40 place-items-center bg-accent-wash text-display text-accent-ink;
+  }
+  .buyer-site .shop-card-body {
+    @apply p-6;
+  }
+  .buyer-site .shop-card h3 {
+    @apply mb-2 mt-3;
+  }
+  .buyer-site .shop-card p {
+    @apply mb-5 text-body-sm text-ink-muted;
+  }
+  .buyer-site .pill {
+    @apply inline-flex rounded-pill bg-accent px-3 py-1.5 text-caption font-medium text-on-accent;
+  }
+  .buyer-site .pill.neutral {
+    @apply bg-surface-sunken text-ink-muted;
+  }
+  .buyer-site .notice {
+    @apply my-5 rounded-control bg-accent-wash px-5 py-4 text-body-sm text-ink;
+  }
+  .buyer-site .notice.error {
+    @apply bg-surface-sunken text-danger;
+  }
+  .buyer-site .page-heading {
+    @apply mb-14 mt-6 flex flex-col gap-8 md:flex-row md:items-center md:justify-between;
+  }
+  .buyer-site .auth-layout {
+    @apply mx-auto grid max-w-6xl gap-10 px-6 py-12 md:grid-cols-2 md:gap-20 md:py-20;
+  }
+  .buyer-site .auth-intro h1 {
+    @apply my-7 whitespace-pre-line;
+  }
+  .buyer-site .auth-intro p {
+    @apply mt-5 max-w-md;
+  }
+  .buyer-site .round-mark {
+    @apply grid size-16 place-items-center rounded-full bg-accent-wash font-display text-title font-bold text-on-accent;
+  }
+  .buyer-site .auth-box {
+    @apply pt-3;
+  }
+  .buyer-site .auth-box h2 {
+    @apply mb-7;
+  }
+  .buyer-site .auth-box > p {
+    @apply mt-6;
+  }
+  .buyer-site .stack {
+    @apply grid gap-6;
+  }
+  .buyer-site .back-link {
+    @apply mb-7 inline-block text-body-sm;
+  }
+  .buyer-site .shop-heading {
+    @apply mb-12 flex flex-col gap-8 md:flex-row md:items-center md:justify-between;
+  }
+  .buyer-site .shop-heading h1 {
+    @apply text-display;
+  }
+  .buyer-site .shop-heading-meta {
+    @apply flex items-center gap-4 text-body-sm text-ink-muted md:grid md:justify-items-end;
+  }
+  .buyer-site .checkout-grid {
+    @apply grid items-start gap-12 md:grid-cols-2;
+  }
+  .buyer-site .menu-list {
+    @apply mb-6 mt-3;
+  }
+  .buyer-site .menu-item {
+    @apply flex justify-between gap-6 border-b border-line py-6;
+  }
+  .buyer-site .menu-item p {
+    @apply my-2 max-w-sm text-body-sm;
+  }
+  .buyer-site .price-line {
+    @apply flex items-center gap-4 text-body-sm;
+  }
+  .buyer-site .price-line strong {
+    @apply text-accent-ink;
+  }
+  .buyer-site .quantity {
+    @apply w-20 shrink-0 content-start text-caption;
+  }
+  .buyer-site .quantity input {
+    @apply px-2;
+  }
+  .buyer-site .receipt {
+    @apply md:sticky md:top-8;
+  }
+  .buyer-site .receipt h2 {
+    @apply mb-6;
+  }
+  .buyer-site .receipt p {
+    @apply mt-5;
+  }
+  .buyer-site .receipt-items {
+    @apply my-6 list-none p-0 text-body-sm;
+  }
+  .buyer-site .receipt-items li {
+    @apply mb-3 flex justify-between gap-4;
+  }
+  .buyer-site .account-overview {
+    @apply mb-14 grid gap-7 md:grid-cols-2;
+  }
+  .buyer-site .wallet-panel {
+    @apply rounded-card bg-accent-wash p-8;
+  }
+  .buyer-site .balance {
+    @apply my-5 text-title md:text-display;
+  }
+  .buyer-site .wallet-panel > p:last-child,
+  .buyer-site .saving-panel > p:last-child {
+    @apply max-w-md text-body-sm;
+  }
+  .buyer-site .saving-panel {
+    @apply rounded-card bg-surface p-8 shadow-card;
+  }
+  .buyer-site .saving-panel h2 {
+    @apply text-body-lg;
+  }
+  .buyer-site .account-section {
+    @apply grid gap-8 border-t border-line py-10 md:grid-cols-2 md:gap-20;
+  }
+  .buyer-site .account-section h2 {
+    @apply mb-4;
+  }
+  .buyer-site .account-section p + p {
+    @apply mt-4;
+  }
+  .buyer-site .agent-controls {
+    @apply grid content-start justify-items-start gap-4;
+  }
+  .buyer-site .link-reveal {
+    @apply w-full rounded-control bg-accent-wash p-5;
+  }
+  .buyer-site .link-reveal textarea {
+    @apply my-3 w-full break-all text-body-sm;
+  }
+  .buyer-site .empty-orders {
+    @apply pt-1 text-ink-muted;
+  }
+  .buyer-site .agent-mark {
+    @apply hidden rotate-3 rounded-card bg-accent-wash px-12 py-8 text-display font-display md:block;
+  }
+  .buyer-site .agent-mark span {
+    @apply text-accent-ink;
+  }
+  .buyer-site .agent-section {
+    @apply grid gap-8 border-t border-line py-12 md:grid-cols-2 md:gap-20;
+  }
+  .buyer-site .agent-section h2 {
+    @apply my-5;
+  }
+  .buyer-site .steps {
+    @apply m-0 list-decimal pl-6;
+  }
+  .buyer-site .steps li {
+    @apply mb-5 pl-2;
+  }
+  .buyer-site .code-sample {
+    @apply my-5 whitespace-pre-wrap break-all rounded-control bg-surface-sunken p-5 text-caption;
+  }
+  .buyer-site .tool-list > div {
+    @apply my-6;
+  }
+  .buyer-site .tool-list dt {
+    @apply mb-1 font-semibold;
+  }
+  .buyer-site .tool-list dd {
+    @apply m-0 text-ink-muted;
+  }
+  .buyer-site .link-row {
+    @apply mt-7 flex gap-6;
+  }
+  .buyer-site .connect-panel h1 {
+    @apply my-6;
+  }
+  .buyer-site .permission-list {
+    @apply my-6 list-disc pl-6;
+  }
+  .buyer-site .permission-list li {
+    @apply mb-3;
+  }
+  .buyer-site .connect-panel form {
+    @apply mt-7;
+  }
+}
