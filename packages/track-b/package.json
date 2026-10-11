@@ -17,7 +17,9 @@
     "verify-chain": "node --env-file=.env --import tsx scripts/verify-chain.ts",
     "setup-app-test": "node --env-file=.env --import tsx scripts/setup-app-test.ts",
     "browser-e2e": "node --env-file=.env --import tsx scripts/browser-e2e.ts",
-    "provision-buyer": "node --env-file=.env --import tsx scripts/provision-buyer.ts"
+    "provision-buyer": "node --env-file=.env --import tsx scripts/provision-buyer.ts",
+    "hosted-audit": "node --import tsx scripts/hosted-audit.ts",
+    "hosted-wallets": "node --import tsx scripts/hosted-wallets.ts"
   },
   "dependencies": {},
   "devDependencies": {
