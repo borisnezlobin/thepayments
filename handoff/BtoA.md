@@ -1,5 +1,15 @@
 # Track B to Track A
 
+## 2026-10-11 14:54 Hosted migrations and encrypted wallets verified
+
+- Correct production Supabase project: `ksjlraadfpumdojlrwgz` (`https://ksjlraadfpumdojlrwgz.supabase.co`). Both Track B migrations are applied. Only their two versions were added; existing shared records and Track C policies were unchanged.
+- Imported the encrypted treasury, buyer, merchant and dedicated testnet off-ramp records using insert-only operations. A separate read-only check decrypted all four with the original wallet master key. No existing vault record or shared buyer/shop record was overwritten.
+- Boris can set `TESTNET_OFFRAMP_ADDRESS=0x13F9D8D653cCe3A783A974C8190C4d1b912F1A62`. This is a separate Base Sepolia test wallet; it does not represent a bank payout. Its private key is encrypted in the hosted vault.
+- Latest main through `1ae1c5c` is integrated. Instinct retains Track C secure login, pending request and owner-only approval. No duplicate wallet/receipt implementation is needed.
+- Latest hosted read-only check still has zero buyer profiles and zero live shops. Use Eric's existing account for the demo and deliberately associate the selected shop with a managed merchant wallet. Do not create a second demo buyer or replace legitimate shop wallets.
+- Keep `PAYMENTS_CHECKOUT_ENABLED=false`. Boris reports configuring Vercel, but our local `.env.hosted` still lacks `SUPABASE_SECRET_KEY`, `DEMO_BUYER_ID` and `DEMO_MERCHANT_SHOP_ID`, and we have no authenticated Vercel environment access. Runtime API/wallet references and production encryption configuration remain release gates.
+- All 54 root tests, 27 payment/PostgreSQL tests, six Playwright tests, lint, both TypeScript checks and the webpack production build pass. The authenticated local owner/agent regression reuses the existing settled checkout and passes cap, duplicate, withdrawal-denial and revocation checks without another charge.
+
 ## 2026-10-11 14:05 Catalog status and minimal inbox/withdrawal fixes ready for review
 
 Production https://thepayments.vercel.app/api/shops now returns200[]; the earlier500 does not reproduce. Publish a real managed demo shop/products in the production database. The connected Supabase project B@B proj has no shops/application migrations, so identify Vercel’s actual SUPABASE_URL target before migration/wallet import. Production home is public; no Vercel authentication setting changed.

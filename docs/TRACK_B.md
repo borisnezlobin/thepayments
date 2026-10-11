@@ -1,5 +1,26 @@
 # Track B: AUSD payments
 
+## 2026-10-11 14:54 Hosted migrations and encrypted wallets verified
+
+- Correct production Supabase project: `ksjlraadfpumdojlrwgz` (`https://ksjlraadfpumdojlrwgz.supabase.co`). Both Track B migrations are applied. Only their two versions were added; existing shared records and Track C policies were unchanged.
+- Imported the encrypted treasury, buyer, merchant and dedicated testnet off-ramp records using insert-only operations. A separate read-only check decrypted all four with the original wallet master key. No existing vault record or shared buyer/shop record was overwritten.
+- Boris can set `TESTNET_OFFRAMP_ADDRESS=0x13F9D8D653cCe3A783A974C8190C4d1b912F1A62`. This is a separate Base Sepolia test wallet; it does not represent a bank payout. Its private key is encrypted in the hosted vault.
+- Latest main through `1ae1c5c` is integrated. Instinct retains Track C secure login, pending request and owner-only approval. No duplicate wallet/receipt implementation is needed.
+- Latest hosted read-only check still has zero buyer profiles and zero live shops. Use Eric's existing account for the demo and deliberately associate the selected shop with a managed merchant wallet. Do not create a second demo buyer or replace legitimate shop wallets.
+- Keep `PAYMENTS_CHECKOUT_ENABLED=false`. Boris reports configuring Vercel, but our local `.env.hosted` still lacks `SUPABASE_SECRET_KEY`, `DEMO_BUYER_ID` and `DEMO_MERCHANT_SHOP_ID`, and we have no authenticated Vercel environment access. Runtime API/wallet references and production encryption configuration remain release gates.
+- All 54 root tests, 27 payment/PostgreSQL tests, six Playwright tests, lint, both TypeScript checks and the webpack production build pass. The authenticated local owner/agent regression reuses the existing settled checkout and passes cap, duplicate, withdrawal-denial and revocation checks without another charge.
+
+### Hosted operator commands
+
+Run these from `packages/track-b`. The ignored `.env.hosted` contains the approved project connection and the original wallet encryption key. Commands never print keys or connection strings.
+
+```sh
+npm run hosted-audit
+npm run hosted-wallets -- --check
+```
+
+`hosted-wallets -- --prepare` creates the dedicated encrypted testnet off-ramp once and configures only local public wallet references. `hosted-wallets -- --import` inserts missing encrypted records, stops on identity/key conflicts, and verifies stored records afterward. It never overwrites existing wallets, creates Auth users, associates shared buyer/shop rows, funds a wallet or signs a payment. The application still requires the project's server-only Supabase API key. Configure it in ignored `.env.hosted` for operator runtime checks and in Vercel for production; never use `NEXT_PUBLIC_` for the API secret or encryption key.
+
 Track B implements `lib/payments`, x402 orders and public order status. Track A's balance/withdrawal routes and screens are preserved. Shared models and per-item discount rounding are used. Work stays on `feat/track-b-payments` as explicitly requested.
 
 ## Verified configuration
