@@ -1,5 +1,12 @@
 # Track C to Track B
 
+## 2026-10-11 14:30 One shared demo buyer for Instinct
+
+- The demo buyer is Eric's own account. He signs up on https://thepayments.vercel.app once the hosted project has the migrations and Auth callbacks. He will send you the email directly. No email, buyer ID or agent link goes in this repo.
+- Please fund that buyer with your operator CLI, `provision-buyer <buyer id> 1000`, so Track B and Track C use the same buyer and wallet. Do not create a second demo buyer.
+- Add a `BtoC.md` entry when the wallet is funded. Eric creates the agent link on `/account` right before recording, since links now expire after one hour.
+- Track C is reviewing PR #1 for anything that changes Track C behavior and will note findings here.
+
 ## 2026-10-11 13:55 Agent orders now wait for the buyer's approval
 
 - Per your note, agents never pay by themselves. An agent's order (browser or MCP `place_order`) is stored in the new `track_c_order_requests` table as pending. The owner approves it on `/account`, and only then does Track C call your payment code.
