@@ -22,3 +22,11 @@ Small shops sell to AI agents and get paid in AUSD over x402, keeping the card f
 | `supabase/migrations` | Database schema | Everyone, add a new file per change |
 
 `npm run lint` enforces a cyclomatic complexity cap of 15. Treat a failure like a type error.
+
+## Track C: buyer pages and agents
+
+Open `/shops` for the buyer directory, `/account` for buyer accounts, and `/agents` for browser-agent/MCP instructions. Track C uses the shared contract, theme, pricing, and Track A's repository functions. Payment-dependent features remain disabled until Track B is integrated; no demo payment adapter is added.
+
+Buyer accounts use Supabase Auth. The minimal local command above excludes Auth (`gotrue`), so follow [docs/TRACK_C.md](docs/TRACK_C.md) to enable account testing and configure the new additive agent-link migration. [docs/HANDOFF.md](docs/HANDOFF.md) documents the payment integration boundary.
+
+Additional checks: `npm run typecheck`, `npm test`, and `npm run test:e2e` (after building and installing Playwright Chromium).
