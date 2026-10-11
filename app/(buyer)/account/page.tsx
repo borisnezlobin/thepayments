@@ -1,122 +1,79 @@
 import { connection } from "next/server";
+import Link from "next/link";
 import { buyerSummary } from "@/lib/payments/buyer";
 import { formatCents } from "@/lib/pricing";
-import Link from "next/link";
 import { buttonClasses } from "@/components/ui/Button";
 import { AgentControls } from "@/components/buyer/agent-controls";
+import { AccountOrders } from "@/components/buyer/AccountOrders";
 import { requireOwner } from "@/lib/buyer/auth";
 import { agentLinkState } from "@/lib/buyer/agent-link-state";
-import { pendingRequests } from "@/lib/buyer/approvals";
-import { checkoutEnabled } from "@/lib/buyer/checkout";
-import { ApprovalRequests } from "@/components/buyer/approval-requests";
+
 export const instant = false;
 export const metadata = {
   title: "Your account",
   robots: { index: false, follow: false },
 };
-export default async function Account({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string; notice?: string }>;
-}) {
+
+const NOTICES: Record<string, string> = {
+  revoked: "Instinct is disconnected. The old link and its sessions no longer work.",
+};
+
+function browserCapCents() {
+  const cap = Number(process.env.PAYMENTS_BROWSER_MAX_ORDER_CENTS ?? "2500");
+  return Number.isInteger(cap) && cap > 0 ? cap : 2500;
+}
+
+function Notice({ error, notice }: { error?: string; notice?: string }) {
+  if (error)
+    return (
+      <p role="alert" className="rounded-control bg-surface-sunken px-4 py-3 text-body-sm font-semibold text-danger">
+        {error}
+      </p>
+    );
+  const message = notice ? NOTICES[notice] : undefined;
+  if (!message) return null;
+  return (
+    <p role="status" className="rounded-control bg-accent-wash px-4 py-3 text-body-sm text-ink">
+      {message}
+    </p>
+  );
+}
+
+export default async function Account({ searchParams }: { searchParams: Promise<{ error?: string; notice?: string }> }) {
   await connection();
   const owner = await requireOwner();
   const params = await searchParams;
   const linkState = await agentLinkState(owner.buyerId);
   const summary = await buyerSummary(owner.buyerId).catch(() => null);
-  const requests = await pendingRequests(owner.buyerId).catch(() => []);
+  const balanceCents = summary?.balanceCents ?? null;
   return (
-    <div className="page account">
-      <header className="page-heading">
-        <div>
-          <h1>Your corner.</h1>
-          <p className="lead">{owner.email}</p>
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 px-6 py-10">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1>Your account</h1>
+          <p className="text-body text-ink-muted">{owner.email}</p>
         </div>
         <Link className={buttonClasses("quiet")} href="/shops">
           Find a shop
         </Link>
       </header>
-      {params.error && (
-        <p role="alert" className="notice error">
-          {params.error}
-        </p>
-      )}
-      {params.notice === "revoked" && (
-        <p role="status" className="notice">
-          Agent access revoked. The old link and its sessions no longer work.
-        </p>
-      )}
-      {params.notice === "approved" && (
-        <p role="status" className="notice">
-          Order approved and paid.
-        </p>
-      )}
-      {params.notice === "declined" && (
-        <p role="status" className="notice">
-          Order declined. Nothing was charged.
-        </p>
-      )}
-      {requests.length > 0 && (
-        <ApprovalRequests requests={requests} canPay={checkoutEnabled} />
-      )}
-      <section className="account-overview" aria-label="Wallet and savings">
-        <div className="wallet-panel">
-          <span>Wallet balance</span>
-          <p className="font-display balance">
-            {summary?.balanceCents == null
-              ? "No wallet yet"
-              : formatCents(summary.balanceCents)}
+      <Notice error={params.error} notice={params.notice} />
+      <section aria-label="Wallet" className="grid gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-2 rounded-card bg-ink p-6 text-surface">
+          <p className="text-body-sm text-surface/75">Wallet balance</p>
+          <p className="tabular font-display text-display font-bold">{balanceCents === null ? "No wallet yet" : formatCents(balanceCents)}</p>
+          <p className="text-body-sm text-surface/75">
+            {balanceCents === null ? "Your wallet is created the first time you pay in the browser." : "Test AUSD on Base Sepolia. Instinct pays from this."}
           </p>
-          <p>A testnet wallet is created for your first checkout.</p>
         </div>
-        <div className="saving-panel">
-          <h2>Your savings</h2>
-          <p className="font-display balance">
-            {summary ? formatCents(summary.savingsCents) : "Unavailable"}
-          </p>
-          <p className="muted">Savings from your recent paid orders.</p>
+        <div className="flex flex-col gap-2 rounded-card bg-surface-sunken p-6">
+          <p className="text-body-sm text-ink-muted">Saved with agent discounts</p>
+          <p className="tabular font-display text-display font-bold">{summary ? formatCents(summary.savingsCents) : "Unavailable"}</p>
+          <p className="text-body-sm text-ink-muted">{summary?.orders.length ? `Across your last ${summary.orders.length} paid orders.` : "Your savings show up after your first order."}</p>
         </div>
       </section>
-      <section id="agent-link" className="account-section">
-        <div>
-          <h2>Let your agent order.</h2>
-          <p>
-            Send a private link to Instinct once. It can browse menus and ask to
-            place orders without your password. You approve each order here
-            before anything is charged.
-          </p>
-          <p className="muted small">
-            The link grants ordering access only. It cannot manage your account,
-            issue links, or withdraw funds. Links expire after one hour;
-            creating a new one immediately invalidates the previous link.
-          </p>
-        </div>
-        <AgentControls {...linkState} />
-      </section>
-      <section className="account-section">
-        <div>
-          <h2>Your orders</h2>
-          <p className="muted">
-            Pickup details and receipts, all in one place.
-          </p>
-        </div>
-        <div className="empty-orders">
-          {summary?.orders.length ? (
-            <ul>
-              {summary.orders.map((order) => (
-                <li key={order.id}>
-                  <Link href={`/orders/${order.id}`}>
-                    Order {order.id.slice(0, 8)}
-                  </Link>{" "}
-                  — {formatCents(order.totalCents)}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>Your paid orders will appear here.</p>
-          )}
-        </div>
-      </section>
+      <AgentControls {...linkState} capCents={browserCapCents()} />
+      <AccountOrders orders={summary?.orders ?? []} />
     </div>
   );
 }

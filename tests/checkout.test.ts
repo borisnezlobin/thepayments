@@ -72,11 +72,10 @@ describe("checkout boundary", () => {
       ),
     ).rejects.toMatchObject({ integration: "payments" });
   });
-  it("holds agent orders for approval instead of paying", async () => {
-    // The agent path goes to the approval table, never to payments.
+  it("never pays for an agent while Track B is disconnected", async () => {
     await expect(
       placeBuyerOrder({ buyerId: "buyer", kind: "agent" }, order),
-    ).rejects.toThrow("The database is not used by these tests.");
+    ).rejects.toMatchObject({ integration: "payments" });
   });
 });
 describe("approval snapshot", () => {

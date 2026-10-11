@@ -71,15 +71,13 @@ describe("agent privilege boundary", () => {
   });
 });
 
-it("caps agent grants at one hour even for legacy long-lived rows", () => {
+it("caps agent grants at 30 days even for legacy long-lived rows", () => {
   const now = Date.now();
-  expect(
-    isActiveGrant(
-      {
-        expires_at: new Date(now + 86400000).toISOString(),
-        created_at: new Date(now - 3600001).toISOString(),
-      },
-      now,
-    ),
-  ).toBe(false);
+  const day = 86400000;
+  const grant = (ageMs: number) => ({
+    expires_at: new Date(now + 365 * day).toISOString(),
+    created_at: new Date(now - ageMs).toISOString(),
+  });
+  expect(isActiveGrant(grant(2 * 3600000), now)).toBe(true);
+  expect(isActiveGrant(grant(30 * day + 1), now)).toBe(false);
 });

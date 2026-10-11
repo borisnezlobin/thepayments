@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 export const AGENT_COOKIE = "payments-agent";
-export const AGENT_LINK_SECONDS = 60 * 60;
+export const AGENT_LINK_SECONDS = 60 * 60 * 24 * 30;
 export function newAgentToken() {
   return randomBytes(32).toString("base64url");
 }
