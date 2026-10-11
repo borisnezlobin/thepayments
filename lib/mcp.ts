@@ -103,7 +103,7 @@ const protocolHandler = createMcpHandler(
       {
         title: "Get a menu",
         description:
-          "Read available menu items. Money is integer USD cents; agentPriceCents is the discounted unit price.",
+          "Read available menu items. Money is integer USD cents; agentPriceCents is the discounted unit price. A dish sold in sizes appears once per size: items sharing a baseName are sizes of one dish, and sizeLabel names the size. Order the productId of the size you want.",
         inputSchema: z.object({ slug: slugSchema }),
         annotations: {
           readOnlyHint: true,
