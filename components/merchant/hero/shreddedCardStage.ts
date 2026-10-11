@@ -14,11 +14,11 @@ import {
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { createCardTextures, type CardTextures } from "./cardFaceTexture";
 import { applyFraming, framingFor, type CardFraming } from "./cardFraming";
-import { CARD_WIDTH } from "./cardGeometry";
-import { buildCardModel, poseStrips, type CardModel } from "./cardModel";
+import { CARD_HEIGHT, CARD_WIDTH } from "./cardGeometry";
+import { buildCardModel, poseBlocks, type CardModel } from "./cardModel";
 import { CARD_PALETTE } from "./cardPalette";
 import { trackPointer, type PointerTracker } from "./pointerInput";
-import { advanceStripMotions, createSpring, createStripMotions, settleStripMotions, stepSpring, type CardPointer } from "./stripMotion";
+import { advanceBlockField, createBlockField, createSpring, settleBlockField, stepSpring, type CardPointer } from "./blockMotion";
 
 const CAMERA_FOV = 26;
 const MAX_PIXEL_RATIO = 2;
@@ -29,7 +29,7 @@ const TILT_FREQUENCY = 3.5;
 const ENGAGEMENT_FREQUENCY = 5;
 const IDLE_SWAY = 0.015;
 const IDLE_BOB = 0.05;
-const STILL_POINTER: CardPointer = { x: CARD_WIDTH * 0.1, y: 0, engagement: 0.4 };
+const STILL_POINTER: CardPointer = { x: CARD_WIDTH * 0.22, y: CARD_HEIGHT * 0.12, engagement: 0.6 };
 
 type ScreenRect = { left: number; top: number; width: number; height: number };
 
@@ -66,7 +66,7 @@ export class ShreddedCardStage {
   private readonly environment: Texture;
   private readonly textures: CardTextures;
   private readonly model: CardModel;
-  private readonly motions = createStripMotions();
+  private readonly field = createBlockField();
   private readonly pointer: PointerTracker = trackPointer();
   private readonly reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   private readonly raycaster = new Raycaster();
@@ -175,7 +175,7 @@ export class ShreddedCardStage {
     this.elapsed += deltaSeconds;
     this.updatePointer(deltaSeconds);
     this.updateBody(deltaSeconds);
-    advanceStripMotions(this.motions, this.cardPointer, deltaSeconds);
+    advanceBlockField(this.field, this.cardPointer, deltaSeconds);
     this.renderPose();
   };
 
@@ -220,13 +220,13 @@ export class ShreddedCardStage {
   }
 
   private renderPose() {
-    poseStrips(this.model, this.motions);
+    poseBlocks(this.model, this.field);
     this.renderer.render(this.scene, this.camera);
   }
 
   private renderStill() {
     if (this.reducedMotion.matches) {
-      settleStripMotions(this.motions, STILL_POINTER);
+      settleBlockField(this.field, STILL_POINTER);
       this.model.body.rotation.set(0, 0, 0);
       this.model.body.position.set(0, 0, 0);
     }

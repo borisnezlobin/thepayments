@@ -1,20 +1,36 @@
 import {
   Color,
+  DynamicDrawUsage,
+  Euler,
   Group,
+  InstancedMesh,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   PlaneGeometry,
+  Quaternion,
   ShaderMaterial,
   Vector2,
-  type BufferGeometry,
+  Vector3,
+  type BoxGeometry,
   type Material,
 } from "three";
-import { CARD_CORNER_RADIUS, CARD_DEPTH, CARD_HEIGHT, CARD_WIDTH, STRIP_COUNT, buildStripGeometry } from "./cardGeometry";
+import { CHANNEL_COUNT, LIFT, PUSH_X, PUSH_Y, type BlockField } from "./blockMotion";
 import type { CardTextures } from "./cardFaceTexture";
+import {
+  BACK_MATERIAL_INDEX,
+  BLOCK_COUNT,
+  BLOCK_DEPTH,
+  CARD_CORNER_RADIUS,
+  CARD_HEIGHT,
+  CARD_WIDTH,
+  FACE_MATERIAL_INDEX,
+  buildBlockGeometry,
+} from "./cardGeometry";
 import { CARD_PALETTE } from "./cardPalette";
-import type { StripMotion } from "./stripMotion";
+import { shapeAsCardFace, shapeAsCardShell } from "./cardShape";
 
 const SLIVER_INSET = 0.26;
 const SLIVER_GAP = 0.02;
@@ -22,11 +38,12 @@ const SHADOW_MARGIN = 3;
 const SHADOW_DROP = 0.45;
 const SHADOW_DEPTH = 1.1;
 const SHADOW_OPACITY = 0.2;
+const ROTATION_PER_PUSH = 0.5;
 
 export type CardModel = {
   stage: Group;
   body: Group;
-  strips: Mesh[];
+  blocks: InstancedMesh<BoxGeometry, Material[]>;
   dispose(): void;
 };
 
@@ -74,11 +91,11 @@ function createContactShadow(): Mesh<PlaneGeometry, ShaderMaterial> {
 function createLightSliver(): Mesh<PlaneGeometry, MeshBasicMaterial> {
   const material = new MeshBasicMaterial({ color: CARD_PALETTE.accent, toneMapped: false });
   const sliver = new Mesh(new PlaneGeometry(CARD_WIDTH - SLIVER_INSET * 2, CARD_HEIGHT - SLIVER_INSET * 2), material);
-  sliver.position.z = -CARD_DEPTH / 2 - SLIVER_GAP;
+  sliver.position.z = -BLOCK_DEPTH / 2 - SLIVER_GAP;
   return sliver;
 }
 
-function createStripMaterials(textures: CardTextures): Material[] {
+function createBlockMaterials(textures: CardTextures): Material[] {
   const face = new MeshPhysicalMaterial({
     map: textures.face,
     roughnessMap: textures.surface,
@@ -89,9 +106,15 @@ function createStripMaterials(textures: CardTextures): Material[] {
     clearcoatRoughness: 0.5,
     envMapIntensity: 0.7,
   });
-  const back = new MeshStandardMaterial({ color: CARD_PALETTE.back, roughness: 0.7 });
-  const edge = new MeshStandardMaterial({ color: CARD_PALETTE.edge, roughness: 0.55 });
-  return [face, back, edge];
+  const edge = new MeshStandardMaterial({ color: CARD_PALETTE.edge, roughness: 0.8 });
+  const back = new MeshStandardMaterial({ color: CARD_PALETTE.back, roughness: 0.8 });
+  shapeAsCardFace(face);
+  shapeAsCardShell(edge, "edge");
+  shapeAsCardShell(back, "back");
+  const materials: Material[] = [edge, edge, edge, edge, edge, edge];
+  materials[FACE_MATERIAL_INDEX] = face;
+  materials[BACK_MATERIAL_INDEX] = back;
+  return materials;
 }
 
 export function buildCardModel(textures: CardTextures): CardModel {
@@ -99,19 +122,22 @@ export function buildCardModel(textures: CardTextures): CardModel {
   const body = new Group();
   const shadow = createContactShadow();
   const sliver = createLightSliver();
-  const materials = createStripMaterials(textures);
-  const geometries: BufferGeometry[] = Array.from({ length: STRIP_COUNT }, (_, index) => buildStripGeometry(index));
-  const strips = geometries.map((geometry) => new Mesh(geometry, materials));
-  body.add(sliver, ...strips);
+  const geometry = buildBlockGeometry();
+  const materials = createBlockMaterials(textures);
+  const blocks = new InstancedMesh(geometry, materials, BLOCK_COUNT);
+  blocks.instanceMatrix.setUsage(DynamicDrawUsage);
+  blocks.frustumCulled = false;
+  body.add(sliver, blocks);
   stage.add(shadow, body);
 
   return {
     stage,
     body,
-    strips,
+    blocks,
     dispose() {
-      geometries.forEach((geometry) => geometry.dispose());
-      materials.forEach((material) => material.dispose());
+      geometry.dispose();
+      new Set(materials).forEach((material) => material.dispose());
+      blocks.dispose();
       [shadow, sliver].forEach((plane) => {
         plane.geometry.dispose();
         plane.material.dispose();
@@ -120,10 +146,21 @@ export function buildCardModel(textures: CardTextures): CardModel {
   };
 }
 
-export function poseStrips(model: CardModel, motions: StripMotion[]) {
-  motions.forEach((motion, index) => {
-    const strip = model.strips[index];
-    strip.position.set(motion.centerX + motion.drift.value, 0, motion.lift.value);
-    strip.rotation.set(0, motion.turn.value, 0);
-  });
+const blockMatrix = new Matrix4();
+const blockPosition = new Vector3();
+const blockRotation = new Euler();
+const blockQuaternion = new Quaternion();
+const unitScale = new Vector3(1, 1, 1);
+
+export function poseBlocks(model: CardModel, field: BlockField) {
+  const { values, centers } = field;
+  for (let index = 0; index < BLOCK_COUNT; index += 1) {
+    const base = index * CHANNEL_COUNT;
+    const pushX = values[base + PUSH_X];
+    const pushY = values[base + PUSH_Y];
+    blockPosition.set(centers[index * 2] + pushX, centers[index * 2 + 1] + pushY, values[base + LIFT]);
+    blockQuaternion.setFromEuler(blockRotation.set(-pushY * ROTATION_PER_PUSH, pushX * ROTATION_PER_PUSH, 0));
+    model.blocks.setMatrixAt(index, blockMatrix.compose(blockPosition, blockQuaternion, unitScale));
+  }
+  model.blocks.instanceMatrix.needsUpdate = true;
 }

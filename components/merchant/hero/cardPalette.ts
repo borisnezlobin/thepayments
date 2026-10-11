@@ -1,7 +1,7 @@
 export const CARD_PALETTE = {
   face: "#111111",
   back: "#0d0d0d",
-  edge: "#1c1c1c",
+  edge: "#080808",
   print: "#e9ecea",
   feePrint: "#ffffff",
   chipLight: "#f1dc9c",
