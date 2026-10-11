@@ -1,6 +1,6 @@
 import { FeeTicket } from "@/components/merchant/FeeTicket";
 import { ImportForm } from "@/components/merchant/ImportForm";
-import { Wordmark } from "@/components/ui/Wordmark";
+import { HomeLogo } from "@/components/ui/Logo";
 
 const STEPS = [
   { title: "Paste your site", body: "We read your menu and prices from the page you already have." },
@@ -14,7 +14,7 @@ export default function Home() {
     <div className="relative overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute -top-40 right-[-10%] size-[42rem] rounded-full bg-accent/25 blur-3xl" />
       <header className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <Wordmark />
+        <HomeLogo />
       </header>
       <main className="relative mx-auto flex max-w-6xl flex-col gap-24 px-6 pt-10 pb-24">
         <section className="grid items-center gap-14 lg:grid-cols-[1.15fr_1fr]">
