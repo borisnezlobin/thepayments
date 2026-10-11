@@ -1,4 +1,5 @@
 "use server";
+import { PaymentError } from "@/lib/payments/validation";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -153,6 +154,11 @@ const requestId = (form: FormData) => {
   return parsed.data;
 };
 function decisionError(error: unknown): never {
+  if (error instanceof PaymentError)
+    fail(
+      "/account",
+      `${error.message} Use Check payment to reconcile the same purchase.`,
+    );
   if (error instanceof InvalidOrder) fail("/account", error.message);
   if (error instanceof IntegrationUnavailable)
     fail(

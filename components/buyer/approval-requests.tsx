@@ -39,7 +39,9 @@ function RequestTicket({
           <form action={approveOrderRequest}>
             <input type="hidden" name="requestId" value={request.id} />
             <Button disabled={!canPay}>
-              Approve and pay {money(request.totalCents)}
+              {request.status === "approved"
+                ? "Check payment"
+                : `Approve and pay ${money(request.totalCents)}`}
             </Button>
           </form>
           <form action={declineOrderRequest}>

@@ -1,6 +1,27 @@
 # Track B to Track C
 
+## 2026-10-11 14:05 Owner approval integrated; wallet and receipts already delivered
+
+Preserved your newest owner-approval flow. Instinct/MCP requests remain pending; `payApprovedRequest(buyerId, request)` rereads the canonical owner-scoped approved request and calls Track B’s checkout from the existing funded buyer wallet. Direct owner checkout remains enabled by PAYMENTS_CHECKOUT_ENABLED. Wallet provisioning, account balances/history and owned receipts are already implemented here; review these instead of building duplicates.
+
+Approved timeout requests remain visible with Check payment and reconcile the same key/auth. Changed pickup/items with the same request key are rejected. Server cap25 AUSD; pre-funded aggregate wallet budget; agent links expire after one hour, including enforcement on legacy rows. Fresh browser used your generated link, submitted a pending request, owner approved, and the original verified payment/order returned with no extra debit. Revocation and account/withdrawal denial pass. Production origin is https://thepayments.vercel.app. Coordinate hosted project/env deployment after PR review. The latest human instruction explicitly says no main merge by Track B.
+
+## 2026-10-11 14:00 Instinct browser integration ready on PR #1
+
+Track C's existing agent-link/Auth implementation is reused. The browser checkout seam now performs server-side hosted x402 payments from the verified buyer's vault wallet; no MetaMask or browser signatures. Agent requests must use a pre-funded wallet and cannot trigger creation or treasury funding. Default browser cap is 25 AUSD (`PAYMENTS_BROWSER_MAX_ORDER_CENTS=2500`, max10000). The funded wallet balance bounds aggregate spend. Same checkout key/body reuses the saved authorization and order.
+
+Fresh-browser tests used your owner-created link and Connect action: checkout replay returned the original hash; excessive purchase403, withdrawal401, accountredirect, revokedcheckout401. Normal pages use strict-origin-when-cross-origin so basic forms retain Origin; private capability routes remain no-referrer. Agent page copy now describes working browser checkout. MCP spending stays disabled. See docs/TRACK_B.md for operator-only provision-buyer, deployment origin/Auth variables and phone acceptance. The phone requires a reachable HTTPS preview, not localhost. User requires feature branch/PR and no main merge.
+
 Newest entries first. Track C deletes an entry once it has handled it.
+
+## 2026-10-11 13:33 Shared app browser checkout verified; PR remains unmerged
+
+- Real authenticated no-JavaScript checkout paid 5 AUSD through x402.org. Supabase order `65c09301-874b-46af-b4cb-67d5a82e9c53` is paid with hash `0xeb14a96553a2911776c36531e77b84eecaaead675825acced4da54809956e078`, verified receipt/events and paid_at. Track A's already-open polling board received it. Replays returned the same order/hash; edited totals/body, forged buyer IDs and wrong origins were rejected.
+- Apply `20261011194144_track_b_payments.sql` and `20261011201257_track_b_buyer_wallets.sql`. If later migrations were already applied locally, run `npx supabase migration up --local --include-all`; tested without resetting data. Do not rename versions already applied to this stack.
+- Configure server-only variables in docs/TRACK_B.md. Enable PAYMENTS_CHECKOUT_ENABLED; optionally enable PAYMENTS_AUTO_FUND_BUYERS with the encrypted treasury. Hosted mode is primary and needs no relayer ETH. Source secrets and test credentials remain ignored.
+- Human instructions explicitly require feat/track-b-payments and a PR without merging into main. PR #1 is the review point. Your merge requests are acknowledged; I have not merged or deleted the branch.
+- On this branch I connected your checkout seam/API/storefront and implemented owner-scoped receipt/account reads. Verified principal identity is preserved; wallet provisioning is atomic on first valid checkout. HTML success redirects to /orders/:id; retry keeps the checkout key. MCP spending remains disabled pending scoped authentication.
+- The global no-referrer header broke plain HTML sign-in by producing Origin:null. Normal pages now use strict-origin-when-cross-origin; private /agent/** and /m/** retain no-referrer. CSRF checks remain strict. Account/receipt pages explicitly opt into dynamic data access under the current Next.js cache configuration.
 
 ## 2026-10-11 13:06 Real hosted AUSD checkout settled
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { MenuItem, ShopMenu } from "@/lib/contract";
 import { money, quote } from "@/lib/money";
+import { checkoutEnabled } from "@/lib/buyer/payment";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Ticket, TicketLine, TicketRule } from "@/components/ui/Ticket";
@@ -112,7 +113,11 @@ function OrderReceipt({
               Send {money(totals.totalCents)} order for approval
             </Button>
           ) : (
-            <Button size="lg" className="w-full" disabled>
+            <Button
+              size="lg"
+              className="w-full"
+              disabled={!checkoutEnabled || !principal || !items.length}
+            >
               Pay {money(totals.totalCents)} from wallet
             </Button>
           )}

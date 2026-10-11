@@ -67,12 +67,12 @@ async function fixture() {
   const repository = new MemoryRepository(),
     rail = new FakeRail(),
     account = privateKeyToAccount(generatePrivateKey()),
-    merchant = privateKeyToAccount(generatePrivateKey());
+    merchant = await walletVault(repository, encryptionKey).createWallet();
   const shop = {
     id: randomUUID(),
     slug: "cafe",
     name: "Demo Cafe",
-    walletAddress: merchant.address,
+    walletAddress: merchant.walletAddress,
     agentDiscountPct: 0,
     status: "live" as const,
   };
@@ -91,7 +91,7 @@ async function fixture() {
     encryptionKey,
     allowedPaymentOrigins: ["http://localhost:4020"],
     treasury: account,
-    offrampAddress: merchant.address,
+    offrampAddress: merchant.walletAddress,
   });
   const body = {
       pickupName: "Alex",
@@ -441,4 +441,69 @@ test("receipt verification requires success, AUSD transfer and matching nonce ev
       f.p,
     ),
   );
+});
+
+test("merchant placeholder or undecryptable vault wallet cannot accept checkout", async () => {
+  const f = await fixture();
+  const stored = await f.repository.findWallet(f.shop.walletAddress);
+  assert.ok(stored);
+  f.repository.wallets.delete(stored.id);
+  await assert.rejects(f.payments.quote("cafe", f.body), /not provisioned/);
+  f.repository.wallets.set(stored.id, { ...stored, encryptedKey: "invalid" });
+  await assert.rejects(
+    f.payments.quote("cafe", f.body),
+    /signing wallet is unavailable/,
+  );
+  assert.equal(f.rail.prepared, 0);
+});
+
+test("withdraw-all retry recovers settlement after wallet debit and RPC outage", async () => {
+  const f = await fixture();
+  const first = await f.payments.withdraw(
+    f.shop,
+    undefined,
+    "withdraw-persistent",
+  );
+  f.rail.getBalance = async () => {
+    throw new Error("RPC offline after debit");
+  };
+  const repeated = await f.payments.withdraw(
+    f.shop,
+    undefined,
+    "withdraw-persistent",
+  );
+  assert.equal(repeated.withdrawal?.id, first.withdrawal?.id);
+  assert.equal(repeated.txHash, first.txHash);
+  assert.equal(f.rail.prepared, 1);
+});
+
+test("expired authorization reconciles a previously settled hosted payment without a new charge", async () => {
+  const f = await fixture();
+  let settlementCalls = 0;
+  f.rail.hosted = {
+    startBlock: async () => "123",
+    settle: async () => {
+      settlementCalls++;
+      throw new Error("Response lost after transfer");
+    },
+    reconcile: async () => (settlementCalls ? txHash : null),
+  };
+  await assert.rejects(
+    f.payments.placeOrder("cafe", f.body, f.p, "expired-recovery"),
+  );
+  const realNow = Date.now;
+  try {
+    Date.now = () => realNow() + 300000;
+    const order = await f.payments.placeOrder(
+      "cafe",
+      f.body,
+      f.p,
+      "expired-recovery",
+    );
+    assert.equal(order.status, "paid");
+    assert.equal(order.txHash, txHash);
+    assert.equal(settlementCalls, 1);
+  } finally {
+    Date.now = realNow;
+  }
 });
