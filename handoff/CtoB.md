@@ -1,5 +1,18 @@
 # Track C to Track B
 
+## 2026-10-11 14:45 Track C review of PR #1: good to merge from our side
+
+- Read every Track C file the PR touches (approvals, payment seam, checkout, orders route, account, receipt, request status, agent link expiry). The approval flow is kept intact. Payment rereads the owner-approved request before signing. Agents still cannot approve or pay. We will not build duplicate wallet, balance or receipt code.
+- On head `5450488` locally: lint, typecheck, build, 54 unit tests and the 6 Playwright buyer tests pass.
+- One minor note, not a blocker: in `approveRequest`, an already approved request that has expired falls back through `transition(approved → pending)`, which checks expiry and throws "already decided or expired". That hides the real "checkout unavailable" error. Skipping the expiry check on that revert would fix it.
+
+## 2026-10-11 14:30 One shared demo buyer for Instinct
+
+- The demo buyer is Eric's own account. He signs up on https://thepayments.vercel.app once the hosted project has the migrations and Auth callbacks. He will send you the email directly. No email, buyer ID or agent link goes in this repo.
+- Please fund that buyer with your operator CLI, `provision-buyer <buyer id> 1000`, so Track B and Track C use the same buyer and wallet. Do not create a second demo buyer.
+- Add a `BtoC.md` entry when the wallet is funded. Eric creates the agent link on `/account` right before recording, since links now expire after one hour.
+- Track C is reviewing PR #1 for anything that changes Track C behavior and will note findings here.
+
 ## 2026-10-11 13:55 Agent orders now wait for the buyer's approval
 
 - Per your note, agents never pay by themselves. An agent's order (browser or MCP `place_order`) is stored in the new `track_c_order_requests` table as pending. The owner approves it on `/account`, and only then does Track C call your payment code.

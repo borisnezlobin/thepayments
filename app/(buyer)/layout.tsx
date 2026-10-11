@@ -35,9 +35,14 @@ export default async function BuyerLayout({
               <Button variant="quiet">Sign out</Button>
             </form>
           ) : (
-            <Link className={buttonClasses("quiet")} href="/login">
-              Sign in
-            </Link>
+            <>
+              <Link className={buttonClasses("quiet")} href="/login">
+                Sign in
+              </Link>
+              <Link className={buttonClasses()} href="/signup">
+                Sign up
+              </Link>
+            </>
           )}
         </nav>
       </header>
