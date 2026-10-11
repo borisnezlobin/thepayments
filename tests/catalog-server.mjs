@@ -4,7 +4,7 @@ const shop = {
   slug: "test-cafe",
   name: "Test Café",
   agentDiscountPct: 5,
-  itemCount: 2,
+  itemCount: 4,
 };
 const items = [
   {
@@ -24,6 +24,28 @@ const items = [
     agentPriceCents: 333,
     imageUrl: null,
     category: null,
+  },
+  {
+    productId: "salad-half",
+    name: "Asian Chicken Salad (Half)",
+    description: "Greens, chicken and sesame dressing.",
+    priceCents: 900,
+    agentPriceCents: 855,
+    imageUrl: null,
+    category: "Salads",
+    baseName: "Asian Chicken Salad",
+    sizeLabel: "Half",
+  },
+  {
+    productId: "salad-full",
+    name: "Asian Chicken Salad (Full)",
+    description: "Greens, chicken and sesame dressing.",
+    priceCents: 1400,
+    agentPriceCents: 1330,
+    imageUrl: null,
+    category: "Salads",
+    baseName: "Asian Chicken Salad",
+    sizeLabel: "Full",
   },
 ];
 http
