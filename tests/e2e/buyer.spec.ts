@@ -87,7 +87,9 @@ test("MCP browser page and discovery file explain current capabilities", async (
     page.getByRole("heading", { name: "Connect directly." }),
   ).toBeVisible();
   const llms = await request.get("/llms.txt");
-  expect(await llms.text()).toContain("awaiting_approval");
+  const text = await llms.text();
+  expect(text).toContain("/agents/connect");
+  expect(text).not.toContain("awaiting_approval");
 });
 test("MCP supports initialization, tool discovery, and a read-only menu request", async ({
   request,
