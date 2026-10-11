@@ -54,3 +54,19 @@ export function groupByCategory(items: DraftItem[]) {
   }
   return [...groups.entries()];
 }
+
+export const SMALLEST_SIZE_SUFFIX = "(smallest size)";
+
+function countNote(count: number, one: string, many: (count: number) => string) {
+  if (count === 0) return null;
+  return count === 1 ? one : many(count);
+}
+
+export function menuNotes(items: DraftItem[]): string[] {
+  const unpriced = items.filter((item) => !item.available && !parsePriceCents(item.price)).length;
+  const sized = items.filter((item) => item.name.endsWith(SMALLEST_SIZE_SUFFIX)).length;
+  return [
+    countNote(unpriced, "One item had no price on your site. Add one and switch it on to sell it.", (n) => `${n} items had no price on your site. Add prices and switch them on to sell them.`),
+    countNote(sized, "One item comes in several sizes. We listed its smallest size.", (n) => `${n} items come in several sizes. We listed each at its smallest size.`),
+  ].filter((note): note is string => note !== null);
+}

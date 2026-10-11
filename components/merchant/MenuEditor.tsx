@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { SHOP_ADMIN_TOKEN_HEADER, type ApiError, type Product, type Shop, type UpdateShopRequest } from "@/lib/contract";
 import { Button } from "@/components/ui/Button";
+import { Field } from "@/components/ui/Field";
 import { DiscountPanel } from "./DiscountPanel";
 import { MenuItemRow } from "./MenuItemRow";
-import { groupByCategory, itemProblem, toDraftItem, toProductEdits, type DraftItem } from "./menuDraft";
+import { groupByCategory, itemProblem, menuNotes, toDraftItem, toProductEdits, type DraftItem } from "./menuDraft";
 
 type SaveState = { phase: "idle" | "saving" | "saved" } | { phase: "failed"; message: string };
 
@@ -34,7 +35,9 @@ function statusText(state: SaveState, problemCount: number) {
 export function MenuEditor({ shop, products, token }: { shop: Shop; products: Product[]; token: string }) {
   const router = useRouter();
   const [items, setItems] = useState(() => products.map(toDraftItem));
+  const [shopName, setShopName] = useState(shop.name);
   const [discountPct, setDiscountPct] = useState(shop.agentDiscountPct);
+  const notes = useMemo(() => menuNotes(items), [items]);
   const [state, setState] = useState<SaveState>({ phase: "idle" });
   const groups = useMemo(() => groupByCategory(items), [items]);
   const problemCount = items.filter((item) => itemProblem(item)).length;
@@ -49,7 +52,7 @@ export function MenuEditor({ shop, products, token }: { shop: Shop; products: Pr
   async function save(publish: boolean) {
     setState({ phase: "saving" });
     try {
-      await saveShop(shop.slug, token, { agentDiscountPct: discountPct, products: toProductEdits(items), publish: publish || undefined });
+      await saveShop(shop.slug, token, { name: shopName.trim(), agentDiscountPct: discountPct, products: toProductEdits(items), publish: publish || undefined });
       setState({ phase: "saved" });
       router.push(publish ? `/m/${token}` : `/m/${token}/menu`);
       router.refresh();
@@ -71,6 +74,13 @@ export function MenuEditor({ shop, products, token }: { shop: Shop; products: Pr
             <span className="tabular font-semibold text-ink">{orderableCount}</span> of {items.length} items can be ordered by agents.
           </p>
         </div>
+        {notes.length > 0 ? (
+          <ul className="flex flex-col gap-1 rounded-control bg-accent-wash px-4 py-3 text-body-sm text-ink">
+            {notes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        ) : null}
         {items.length === 0 ? (
           <p className="rounded-card bg-surface-sunken p-6 text-body text-ink-muted">We didn&rsquo;t find any items on that page. Go back and paste the link to your menu page itself.</p>
         ) : null}
@@ -86,12 +96,19 @@ export function MenuEditor({ shop, products, token }: { shop: Shop; products: Pr
         ))}
       </section>
       <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start">
+        <Field
+          label="Shop name"
+          name="shop-name"
+          value={shopName}
+          onChange={(event) => (setShopName(event.target.value), setState({ phase: "idle" }))}
+          hint="Agents and customers see this name."
+        />
         <DiscountPanel discountPct={discountPct} onChange={(pct) => (setDiscountPct(pct), setState({ phase: "idle" }))} />
         <div className="flex flex-col gap-2">
           <Button
             size="lg"
             onClick={() => save(!live)}
-            disabled={saving || problemCount > 0 || orderableCount === 0}
+            disabled={saving || problemCount > 0 || orderableCount === 0 || !shopName.trim()}
             icon={saving ? <CircleNotch size={20} weight="bold" className="animate-spin" aria-hidden /> : live ? null : <RocketLaunch size={20} weight="bold" aria-hidden />}
           >
             {live ? "Save changes" : "Publish my storefront"}

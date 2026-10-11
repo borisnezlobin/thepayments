@@ -51,3 +51,11 @@ Shared files change additively. Add new fields and functions, and don't rename o
 - Copy: never join a second clause with ", and" or ", so" (make it its own sentence). No trailing appositions after a colon or dash, no "it's not X, it's Y", no "matters", no hype words, no fragments posing as sentences. Every line carries a fact or an action. Avoid filler words like "seamless", "elevate", "curated", "crafted" and "genuinely".
 - Use the theme's named sizes and layouts (`lg:layout-sidebar`, `lg:layout-hero`, `drop-shadow-ticket`) instead of arbitrary values like `grid-cols-[1fr_22rem]`.
 
+
+## Context.dev (menu import)
+
+- The key lives in `CONTEXT_DEV_API_KEY`, server-side only (`.env.local` locally, Vercel env in production). Never expose it to the browser.
+- Every call goes through `lib/shops/contextDev.ts`, which retries 408, 429 and 5xx with bounded backoff and honors `Retry-After`. `lib/shops/importMenu.ts` decides what to call.
+- [Scrape](https://docs.context.dev/api-reference/web-scraping/scrape) (`POST /web/scrape`) with the `json` format extracts the menu against the schema in `lib/shops/menuExtraction.ts`. About 1 credit per page, cached for 3 days by default.
+- [Map URLs](https://docs.context.dev/api-reference/web-scraping/map) (`GET /web/urls` with `search`) finds the menu page when the pasted page has no items. 2 credits, and it only runs when the first scrape comes back empty.
+- The team key has 1,000 free credits a month, so an import costs 1 to 3 credits. Tests must never call the live API.
