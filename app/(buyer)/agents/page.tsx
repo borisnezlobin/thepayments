@@ -38,6 +38,11 @@ export default function Agents() {
             <li>Create a private agent link and send it to your agent.</li>
             <li>Ask it to open the link, connect, and find your shop.</li>
             <li>
+              If your agent keeps logins in a vault, save the access token there
+              instead. It pastes the token at{" "}
+              <Link href="/agents/connect">Connect your agent</Link>.
+            </li>
+            <li>
               Choose quantities, update the order total, and enter a pickup
               name. Then send the order for approval.
             </li>

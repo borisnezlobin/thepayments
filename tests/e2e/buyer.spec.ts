@@ -147,3 +147,25 @@ test("browser order endpoint blocks cross-origin and unauthenticated submissions
   });
   expect(anonymous.status()).toBe(401);
 });
+test("agent token form works without JavaScript and keeps the token out of the URL", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto("http://127.0.0.1:3100/agents/connect");
+  const token = "x".repeat(43);
+  await page.getByLabel("Agent access token").fill(token);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await expect(page).toHaveURL(/\/agents\/connect\?error=invalid$/);
+  expect(page.url()).not.toContain(token);
+  await expect(
+    page.getByText(
+      "That token didn't work. It may be mistyped, expired or revoked.",
+    ),
+  ).toBeVisible();
+  expect(await page.content()).not.toContain(token);
+  expect(
+    (await context.cookies()).some(({ name }) => name === "payments-agent"),
+  ).toBe(false);
+  await context.close();
+});
