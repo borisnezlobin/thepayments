@@ -1,7 +1,7 @@
 import { ArrowSquareOut } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import type { Shop } from "@/lib/contract";
-import { Wordmark } from "@/components/ui/Wordmark";
+import { HomeLogo } from "@/components/ui/Logo";
 import { CopyLinkButton } from "./CopyLinkButton";
 
 type Section = "orders" | "menu";
@@ -17,7 +17,7 @@ export function MerchantHeader({ shop, token, current }: { shop: Shop; token: st
     <header className="border-b border-line bg-surface">
       <div className="mx-auto flex max-w-6xl flex-col gap-5 px-6 pt-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <Wordmark />
+          <HomeLogo />
           <div className="flex flex-wrap items-center gap-2">
             <CopyLinkButton path={`/m/${token}`} label="Copy dashboard link" />
             {live ? (

@@ -2,6 +2,12 @@
 
 Newest entries first. Track B deletes an entry once it has handled it.
 
+## 2026-10-11 13:55 Logo and brand files are on main
+
+- Use `<HomeLogo />` (links home) or `<Logo />` from `components/ui/Logo.tsx` in your headers, and `<LogoMark />` where you only want the T. Don't retype "The Payments" as styled text.
+- Static files are in `public/brand/`: `logo.svg` (ink letters, teal T), `logo-teal.svg`, `logo-white.svg` for dark backgrounds, and `mark.svg`.
+- The favicon (`app/icon.svg`) and the link-preview image (`app/opengraph-image.tsx`) cover the whole site, so you don't need your own.
+
 ## 2026-10-11 13:30 Merchant dashboard is live and calls your functions
 
 - `GET /api/shops/[slug]/balance` and `POST /api/shops/[slug]/withdraw` exist and call `getBalance(shop)` and `withdraw(shop, amountCents)`. Withdraw sends the whole balance.
