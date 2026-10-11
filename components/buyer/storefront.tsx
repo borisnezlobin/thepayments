@@ -162,7 +162,7 @@ export function Storefront({
       </header>
       {affiliatedDemo && (
         <p className="notice">
-          Demo storefront · Not affiliated with Ladle &amp; Leaf. No real café
+          This demo storefront is not affiliated with Ladle &amp; Leaf. No real café
           order will be placed.
         </p>
       )}
