@@ -14,7 +14,7 @@ function EmptyInbox({ slug }: { slug: string }) {
       <span aria-hidden className="size-3 animate-pulse-ring rounded-pill bg-accent" />
       <p className="text-body-lg font-semibold">Waiting for the first agent order</p>
       <p className="max-w-md text-body-sm text-ink-muted">
-        New orders print here as tickets, so you can leave this page open on the counter. Agents find you at{" "}
+        New orders print here as tickets. Leave this page open on the counter. Agents find you at{" "}
         <span className="font-semibold text-ink">/s/{slug}</span>.
       </p>
     </div>
@@ -27,7 +27,7 @@ export function InboxBoard({ shop, token, initial }: { shop: Shop; token: string
   const done = inbox.data.orders.filter((order) => order.status === "picked_up");
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[1fr_22rem]">
+    <div className="grid gap-10 lg:layout-sidebar">
       <section aria-labelledby="orders-heading" className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="orders-heading" className="text-title font-bold">

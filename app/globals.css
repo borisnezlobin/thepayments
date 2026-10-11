@@ -4,11 +4,11 @@
   --color-surface: #ffffff;
   --color-surface-sunken: #f3f6f5;
   --color-line: #dce4e2;
-  --color-ink: #0b1f1c;
+  --color-ink: #000000;
   --color-ink-muted: #4d5f5b;
   --color-accent: #00bca8;
   --color-accent-ink: #008577;
-  --color-on-accent: #0b1f1c;
+  --color-on-accent: #000000;
   --color-accent-wash: #e3f8f5;
   --color-danger: #b42318;
 
@@ -34,12 +34,18 @@
   --radius-card: 1.25rem;
   --radius-pill: 999px;
 
-  --shadow-card: 0 1px 2px rgb(11 31 28 / 0.06), 0 8px 24px -12px rgb(11 31 28 / 0.18);
-  --shadow-raised: 0 2px 4px rgb(11 31 28 / 0.06), 0 24px 48px -20px rgb(11 31 28 / 0.28);
-  --shadow-ring: 0 0 0 1px rgb(11 31 28 / 0.08);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px -12px rgb(0 0 0 / 0.18);
+  --shadow-raised: 0 2px 4px rgb(0 0 0 / 0.06), 0 24px 48px -20px rgb(0 0 0 / 0.28);
+  --shadow-ring: 0 0 0 1px rgb(0 0 0 / 0.08);
   --shadow-accent-glow: 0 0 0 6px rgb(0 188 168 / 0.18);
 
   --ease-out-soft: cubic-bezier(0.2, 0, 0, 1);
+
+  --tracking-body: 0.012em;
+
+  --drop-shadow-ticket: 0 10px 18px rgb(0 0 0 / 0.12);
+
+  --spacing-sidebar: 22rem;
 
   --animate-ticket-in: ticket-in 520ms var(--ease-out-soft) both;
   --animate-pulse-ring: pulse-ring 1600ms var(--ease-out-soft) infinite;
@@ -72,6 +78,40 @@
     conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / var(--ticket-tooth) 51% repeat-x;
 }
 
+@utility layout-hero {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+
+@utility layout-sidebar {
+  grid-template-columns: minmax(0, 1fr) var(--spacing-sidebar);
+}
+
+@utility range-accent {
+  appearance: none;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(to right, var(--color-accent-ink) var(--range-fill, 50%), var(--color-line) var(--range-fill, 50%));
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    box-shadow: 0 0 0 2px var(--color-accent-ink), 0 2px 6px rgb(0 0 0 / 0.2);
+  }
+
+  &::-moz-range-thumb {
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    box-shadow: 0 0 0 2px var(--color-accent-ink), 0 2px 6px rgb(0 0 0 / 0.2);
+  }
+}
+
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
@@ -81,6 +121,7 @@
     background: var(--color-surface);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    letter-spacing: var(--tracking-body);
   }
 
   h1,
@@ -88,6 +129,13 @@
   h3 {
     font-family: var(--font-display);
     text-wrap: balance;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    letter-spacing: normal;
   }
 
   p {

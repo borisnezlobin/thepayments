@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CircleNotch } from "@phosphor-icons/react";
+import { CircleNotch } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { ApiError, ImportShopResponse } from "@/lib/contract";
@@ -60,11 +60,10 @@ export function ImportForm() {
         />
         <Button type="submit" size="lg" disabled={reading} icon={reading ? <CircleNotch size={20} weight="bold" className="animate-spin" aria-hidden /> : null}>
           {reading ? "Reading your menu" : "Build my storefront"}
-          {reading ? null : <ArrowRight size={20} weight="bold" aria-hidden />}
         </Button>
       </div>
       <p id="shop-url-status" role="status" className={`min-h-5 px-2 text-body-sm ${state.phase === "failed" ? "text-danger" : "text-ink-muted"}`}>
-        {state.phase === "failed" ? state.message : reading ? "This usually takes 15 to 30 seconds." : "Paste the page where your menu and prices live."}
+        {state.phase === "failed" ? state.message : reading ? "This usually takes 15 to 30 seconds." : "Paste the page that lists your menu and prices."}
       </p>
     </form>
   );

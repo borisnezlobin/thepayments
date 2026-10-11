@@ -8,7 +8,7 @@ export interface TicketProps extends HTMLAttributes<HTMLDivElement> {
 export function Ticket({ children, tone = "plain", className = "", ...rest }: TicketProps) {
   const toneClass = tone === "fresh" ? "bg-accent-wash" : "bg-surface";
   return (
-    <div className={`drop-shadow-[0_10px_18px_rgb(11_31_28/0.12)] ${className}`} {...rest}>
+    <div className={`drop-shadow-ticket ${className}`} {...rest}>
       <div className={`ticket-edge px-6 py-7 ${toneClass}`}>{children}</div>
     </div>
   );
