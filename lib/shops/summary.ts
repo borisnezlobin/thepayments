@@ -1,4 +1,4 @@
-import type { Order } from "../contract";
+import type { Order, Withdrawal } from "../contract";
 import { cardFeesForOrders } from "../pricing";
 
 export const SUMMARY_WINDOW_DAYS = 7;
@@ -23,4 +23,11 @@ export function summarizeSales(orders: Order[], now = new Date()): SalesSummary 
     discountsGivenCents,
     keptCents: cardFeesAvoidedCents - discountsGivenCents,
   };
+}
+
+export interface InboxResponse {
+  orders: Order[];
+  summary: SalesSummary;
+  balanceCents: number;
+  withdrawals: Withdrawal[];
 }
