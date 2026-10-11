@@ -99,7 +99,7 @@ export async function payX402(
   wallet: Wallet,
   url: string,
   body: CreateOrderRequest & { buyerId?: string },
-  options: { idempotencyKey?: string } = {},
+  options: { idempotencyKey?: string; expectedTotalCents: number },
 ) {
   const result = await paymentRuntime().payments.payX402(
     await resolveWallet(wallet),

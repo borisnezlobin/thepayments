@@ -112,7 +112,11 @@ try {
     await payments.getBalance(roles.treasury.walletAddress),
   );
   console.log("Funding buyer with 100 testnet AUSD from treasury");
-  const funding = await payments.fundBuyer(roles.buyer, 10000, "demo-buyer-funding-100-ausd");
+  const funding = await payments.fundBuyer(
+    roles.buyer,
+    10000,
+    "demo-buyer-funding-100-ausd",
+  );
   console.log("BUYER FUNDING", JSON.stringify(funding, null, 2));
   const handler = createPaymentHandler(payments),
     fetcher = (async (url: RequestInfo | URL, options?: RequestInit) =>
@@ -124,6 +128,7 @@ try {
     {
       idempotencyKey: process.env.DEMO_ORDER_KEY ?? "first-real-five-ausd",
       fetcher,
+      expectedTotalCents: 500,
     },
   );
   console.log("REAL PAYMENT", JSON.stringify(result, null, 2));
