@@ -163,9 +163,9 @@ export async function revokeAgentLink() {
   });
   redirect("/account?notice=revoked#agent-link");
 }
-export async function connectAgent(form: FormData) {
-  const token = String(form.get("token") || "");
-  if (!(await resolveAgent(token))) redirect("/agents?error=expired");
+// Both connect paths share one session setup. The token never goes into a URL or a log.
+async function startAgentSession(token: string, failPath: string) {
+  if (!(await resolveAgent(token))) redirect(failPath);
   (await cookies()).set(AGENT_COOKIE, token, {
     httpOnly: true,
     secure: secure(),
@@ -174,6 +174,19 @@ export async function connectAgent(form: FormData) {
     maxAge: AGENT_LINK_SECONDS,
   });
   redirect("/shops?notice=connected");
+}
+export async function connectAgent(form: FormData) {
+  await startAgentSession(
+    String(form.get("token") || ""),
+    "/agents?error=expired",
+  );
+}
+// Used by /agents/connect, where an agent pastes its access token into a form.
+export async function connectAgentWithToken(form: FormData) {
+  await startAgentSession(
+    String(form.get("token") || "").trim(),
+    "/agents/connect?error=invalid",
+  );
 }
 const requestId = (form: FormData) => {
   const parsed = z.string().uuid().safeParse(form.get("requestId"));

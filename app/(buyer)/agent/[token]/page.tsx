@@ -45,7 +45,7 @@ export default async function AgentLink({
         </ul>
         <p className="muted">
           {browserCheckoutEnabled()
-            ? "This browser can place purchases from the buyer’s existing wallet within the checkout spending limit. Each order waits for the buyer to approve it on their account page before payment."
+            ? "This browser can pay for orders from the buyer’s funded wallet, up to the per-order spending limit."
             : "This browser can browse menus. Wallet checkout is not enabled yet."}
         </p>
         <form action={connectAgent}>

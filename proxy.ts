@@ -36,6 +36,7 @@ export const config = {
     "/login",
     "/signup",
     "/agent/:path*",
+    "/agents/connect",
     "/shops",
     "/s/:path*",
     "/orders/:path*",
