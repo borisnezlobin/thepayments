@@ -7,3 +7,43 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# The Payments: team rules for every agent
+
+Three teammates build in parallel, each with their own coding agent. Track A is the merchant side, Track B is payments and the chain, and Track C is the buyer side and agents. [PLAN.md](PLAN.md) says what each track builds.
+
+## Git: one branch, pull constantly
+
+- Work on `main` only. Never create branches or pull requests.
+- Run `git pull --rebase --autostash` before you start a task, before every commit, and whenever you see new commits on `origin/main` (`git fetch && git status -sb`).
+- Commit small and push right away. A push that is rejected means someone pushed first: pull with rebase, re-run the build, push again.
+- `npm run build` and `npm run lint` must pass before you push. Lint caps cyclomatic complexity at 15.
+- If a rebase conflicts in a file another track owns, keep their version and tell them in their handoff file.
+
+## Handoff files: how tracks talk to each other
+
+`handoff/` holds one file per direction: `AtoB.md` is Track A writing to Track B, `CtoA.md` is Track C writing to Track A, and so on.
+
+- After every pull, read the files addressed to your track (`handoff/*to<your track>.md`) and act on anything new.
+- Write to a handoff file whenever another track needs to know something: a contract change, a new environment variable, a new migration, an endpoint that is ready, or something of theirs that is broken.
+- Add entries at the top as `## YYYY-MM-DD HH:MM <title>` followed by what changed and what they need to do. Commit and push the handoff file immediately.
+- The receiving track deletes an entry once it has handled it. Git keeps the history.
+
+## Who owns what
+
+| Path | Owner |
+| --- | --- |
+| `app/page.tsx`, `app/m/**`, `app/api/shops/import`, `app/api/shops/route.ts`, `app/api/shops/[slug]/route.ts`, `app/api/shops/[slug]/menu`, `app/api/shops/[slug]/inbox/**`, `lib/shops/**`, `components/merchant/**` | A |
+| `lib/payments/**`, `app/api/shops/[slug]/orders/**`, `app/api/orders/**`, `app/api/shops/[slug]/balance`, `app/api/shops/[slug]/withdraw` | B |
+| `app/s/**`, `app/shops/**`, `app/account/**`, `app/mcp/**`, `app/api/buyer/**`, `components/buyer/**` | C |
+| `lib/contract.ts`, `lib/db/**`, `lib/pricing.ts`, `components/ui/**`, `app/globals.css`, `app/layout.tsx`, `supabase/migrations/**` | Shared |
+
+Shared files change additively. Add new fields and functions, and don't rename or remove existing ones without a handoff entry to both other tracks. Each schema change is a new file in `supabase/migrations/`, never an edit to an existing one.
+
+## Design rules
+
+- Use the tokens in `app/globals.css` (`bg-accent`, `text-ink-muted`, `text-body-sm`, `rounded-card`, `shadow-card` and the rest). Don't write raw hex colors or arbitrary sizes.
+- Use the components in `components/ui` before writing new markup for a button, field, ticket or status.
+- Icons come from `@phosphor-icons/react`. Use `@phosphor-icons/react/dist/ssr` in server components. No emoji.
+- Teal `#00BCA8` (`accent`) is a fill and accent only. Teal text uses `accent-ink`, and text on a teal fill uses `on-accent`.
+- No all-caps labels, no letter-spacing changes, and no rounded element with a visible colored border. Subtle form inputs are the one exception.
