@@ -7,11 +7,14 @@ export const alt = "The Payments: sell to AI agents and keep the card fee";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const asset = (path: string) => readFile(join(process.cwd(), path));
 const svgDataUri = (svg: Buffer) => `data:image/svg+xml;base64,${svg.toString("base64")}`;
 
 export default async function OpenGraphImage() {
-  const [logo, headline, bodyFont] = await Promise.all([asset("public/brand/logo.svg"), asset("assets/og/headline.svg"), asset("assets/og/CooperHewitt-Semibold.ttf")]);
+  const [logo, headline, bodyFont] = await Promise.all([
+    readFile(join(process.cwd(), "public/brand/logo.svg")),
+    readFile(join(process.cwd(), "assets/og/headline.svg")),
+    readFile(join(process.cwd(), "assets/og/CooperHewitt-Semibold.ttf")),
+  ]);
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: BRAND_COLORS.surface, fontFamily: "Cooper Hewitt" }}>
