@@ -5,6 +5,7 @@ import { findShops } from "@/lib/catalog";
 import { CatalogError, IntegrationUnavailable } from "@/lib/errors";
 import { StatusPanel } from "@/components/buyer/status-panel";
 import type { ShopSummary } from "@/lib/contract";
+import { ShopPhoto } from "@/components/buyer/ShopPhoto";
 export const metadata = { title: "Find a shop" };
 export default async function Shops({
   searchParams,
@@ -109,9 +110,12 @@ export default async function Shops({
                 href={`/s/${shop.slug}`}
                 key={shop.slug}
               >
-                <div className="shop-monogram font-display" aria-hidden="true">
-                  {shop.name.slice(0, 1)}
-                </div>
+                <ShopPhoto
+                  slug={shop.slug}
+                  name={shop.name}
+                  className="h-40 w-full"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
+                />
                 <div className="shop-card-body">
                   <span className="pill">Save {shop.agentDiscountPct}%</span>
                   <h3>{shop.name}</h3>
