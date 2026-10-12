@@ -2,7 +2,9 @@ import { z } from "zod";
 import type { ShopMenu, ShopSummary } from "@/lib/contract";
 export const slugSchema = z
   .string()
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  // Older imports can end in a hyphen or contain doubled separator hyphens.
+  // Preserve their URLs while restricting the entire slug to safe path characters.
+  .regex(/^[a-z0-9][a-z0-9-]*$/)
   .max(100);
 const cents = z.number().int().nonnegative().max(100_000_000);
 export const shopSummarySchema: z.ZodType<ShopSummary> = z.object({
