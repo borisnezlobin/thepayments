@@ -23,12 +23,13 @@ async function saveShop(slug: string, token: string, request: UpdateShopRequest)
   throw new Error(body.error);
 }
 
-function statusText(state: SaveState, problemCount: number) {
+function statusText(state: SaveState, problemCount: number, orderable: boolean) {
   if (state.phase === "failed") return state.message;
   if (state.phase === "saving") return "Saving";
   if (state.phase === "saved") return "Saved";
-  if (problemCount === 1) return "One item needs attention before you publish.";
-  if (problemCount > 1) return `${problemCount} items need attention before you publish.`;
+  if (!orderable) return "Make at least one item ready before publishing.";
+  if (problemCount === 1) return "One unfinished item will stay hidden. Your ready items can be published.";
+  if (problemCount > 1) return `${problemCount} unfinished items will stay hidden. Your ready items can be published.`;
   return "";
 }
 
@@ -63,12 +64,12 @@ function SaveControls({ live, state, items, shopName, onSave }: { live: boolean;
   const saving = state.phase === "saving";
   const problemCount = items.filter((item) => itemProblem(item)).length;
   const orderable = items.some((item) => item.available && !itemProblem(item));
-  const blocked = saving || problemCount > 0 || !orderable || !shopName.trim();
+  const blocked = saving || !orderable || !shopName.trim();
   const publishIcon = live ? null : <RocketLaunch size={20} weight="bold" aria-hidden />;
   return (
     <div className="flex flex-col gap-2">
       <Button size="lg" onClick={() => onSave(!live)} disabled={blocked} icon={saving ? <CircleNotch size={20} weight="bold" className="animate-spin" aria-hidden /> : publishIcon}>
-        {live ? "Save changes" : "Publish my storefront"}
+        {live ? "Save changes" : problemCount > 0 ? "Publish ready items" : "Publish my storefront"}
       </Button>
       {live ? null : (
         <Button variant="quiet" onClick={() => onSave(false)} disabled={saving}>
@@ -76,7 +77,7 @@ function SaveControls({ live, state, items, shopName, onSave }: { live: boolean;
         </Button>
       )}
       <p role="status" className={`min-h-5 text-body-sm ${state.phase === "failed" || problemCount > 0 ? "text-danger" : "text-ink-muted"}`}>
-        {statusText(state, problemCount)}
+        {statusText(state, problemCount, orderable)}
       </p>
     </div>
   );
@@ -105,7 +106,7 @@ export function MenuEditor({ shop, products, token }: { shop: Shop; products: Pr
   async function save(publish: boolean) {
     setState({ phase: "saving" });
     try {
-      await saveShop(shop.slug, token, { name: shopName.trim(), agentDiscountPct: discountPct, products: toProductEdits(items), publish: publish || undefined });
+      await saveShop(shop.slug, token, { name: shopName.trim(), agentDiscountPct: discountPct, products: toProductEdits(items, publish || live), publish: publish || undefined });
       setState({ phase: "saved" });
       router.push(publish ? `/m/${token}` : `/m/${token}/menu`);
       router.refresh();
