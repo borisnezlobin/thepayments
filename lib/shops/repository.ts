@@ -20,7 +20,8 @@ export function slugify(name: string) {
     .normalize("NFKD")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
+    .slice(0, 40)
+    .replace(/-+$/, "");
   return base || "shop";
 }
 
