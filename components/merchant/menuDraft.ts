@@ -2,6 +2,7 @@ import type { Product, ProductEdit } from "@/lib/contract";
 import { sizedName } from "@/lib/menuNames";
 
 export interface DraftItem {
+  originalName?: string;
   id: string;
   name: string;
   description: string;
@@ -26,6 +27,7 @@ export interface MenuSection {
 
 export function toDraftItem(product: Product): DraftItem {
   return {
+    originalName: product.name,
     id: product.id,
     name: product.baseName ?? product.name,
     description: product.description ?? "",
@@ -77,16 +79,16 @@ function editName(item: DraftItem, sizeIndex: number) {
   return item.baseName ? sizedName(item.name.trim(), item.sizeLabel.trim() || null, sizeIndex) : item.name.trim();
 }
 
-export function toProductEdits(items: DraftItem[]): ProductEdit[] {
+export function toProductEdits(items: DraftItem[], hideUnfinished = false): ProductEdit[] {
   return groupMenu(items).flatMap((section) =>
     section.dishes.flatMap((dish) =>
       dish.items.map((item, sizeIndex) => ({
         id: item.id,
-        name: editName(item, sizeIndex),
+        name: hideUnfinished && !item.name.trim() ? item.originalName ?? "" : editName(item, sizeIndex),
         description: item.description.trim() || null,
         priceCents: parsePriceCents(item.price) ?? 0,
-        available: item.available,
-        baseName: item.baseName ? item.name.trim() : null,
+        available: item.available && !(hideUnfinished && itemProblem(item)),
+        baseName: item.baseName ? item.name.trim() || null : null,
         sizeLabel: item.baseName ? item.sizeLabel.trim() || null : null,
       })),
     ),
