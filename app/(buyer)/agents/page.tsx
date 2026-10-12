@@ -28,7 +28,7 @@ export default function Agents() {
         <div>
           <span className="pill neutral">Instinct &amp; browser agents</span>
           <h2>
-            Give your agent a link,
+            Give your agent a token,
             <br />
             not your password.
           </h2>
@@ -38,12 +38,12 @@ export default function Agents() {
             <li>Create a buyer account and open your account page.</li>
             <li>
               Press Connect Instinct. Save the access token in your
-              agent&rsquo;s vault, or send it the private link.
+              agent&rsquo;s vault.
             </li>
             <li>
               Your agent pastes the token at{" "}
-              <Link href="/agents/connect">Connect your agent</Link> or opens
-              the link. Either one works once, within 15 minutes.
+              <Link href="/agents/connect">Connect your agent</Link>. It works
+              once, within 15 minutes.
             </li>
             <li>
               It stays signed in for 90 days. It can come back and order without

@@ -30,7 +30,8 @@ export function AuthForm({
           One account for your orders and the agents you trust to place them.
         </p>
         <p className="muted">
-          You stay in control. Agent links can be revoked at any time.
+          You approve every order your agent asks for. You can disconnect it at
+          any time.
         </p>
       </section>
       <section className="auth-box">

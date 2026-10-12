@@ -7,7 +7,6 @@ interface AgentControlsProps {
   available: boolean;
   active: boolean;
   expiresAt: string | null;
-  newLink: string | null;
   newToken: string | null;
   newTokenExpiresAt: string | null;
   capCents: number;
@@ -21,15 +20,14 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "UTC" });
 }
 
-function NewToken({ link, token, expiresAt, capCents }: { link: string; token: string; expiresAt: string | null; capCents: number }) {
+function NewToken({ token, expiresAt, capCents }: { token: string; expiresAt: string | null; capCents: number }) {
   return (
     <div className="flex flex-col gap-3 rounded-card bg-accent-wash p-5">
       <h3 className="text-body-lg font-semibold">Connect Instinct</h3>
       <p className="text-body-sm text-ink">
-        Save the access token in Instinct&rsquo;s vault. Instinct pastes it at <span className="font-mono">/agents/connect</span>. You can text it the link instead. Either one works once{expiresAt ? `, until ${formatTime(expiresAt)} UTC` : ""}.
+        Save this token in Instinct&rsquo;s vault. Instinct pastes it at <span className="font-mono">/agents/connect</span>. It works once{expiresAt ? `, until ${formatTime(expiresAt)} UTC` : ""}.
       </p>
       <CopyField value={token} label="Agent access token" copyLabel="Copy token" />
-      <CopyField value={link} label="Your private agent link" />
       <p className="text-body-sm text-ink">
         After it connects, Instinct stays signed in for 90 days or until you disconnect it. It can ask for orders up to {formatCents(capCents)}. Each one waits here for your approval.
       </p>
@@ -67,7 +65,7 @@ function LinkActions({ active, pending }: { active: boolean; pending: boolean })
   );
 }
 
-export function AgentControls({ available, active, expiresAt, newLink, newToken, newTokenExpiresAt, capCents }: AgentControlsProps) {
+export function AgentControls({ available, active, expiresAt, newToken, newTokenExpiresAt, capCents }: AgentControlsProps) {
   return (
     <section id="agent-link" aria-labelledby="agent-heading" className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
@@ -75,7 +73,7 @@ export function AgentControls({ available, active, expiresAt, newLink, newToken,
         <p className="text-body text-ink-muted">Text Instinct what you want. It finds the shop and asks to place the order. Nothing is paid until you approve it here.</p>
       </div>
       {available ? null : <p className="text-body-sm text-ink-muted">Agent connections aren&rsquo;t available until account storage is set up.</p>}
-      {available && newLink && newToken ? <NewToken link={newLink} token={newToken} expiresAt={newTokenExpiresAt} capCents={capCents} /> : null}
+      {available && newToken ? <NewToken token={newToken} expiresAt={newTokenExpiresAt} capCents={capCents} /> : null}
       {available && active ? <Connected expiresAt={expiresAt} /> : null}
       {available ? <LinkActions active={active} pending={Boolean(newToken)} /> : null}
       <p className="text-body-sm text-ink-muted">A connected agent can only browse and ask for orders. It can&rsquo;t open your account, approve orders or withdraw money. Connecting again replaces the old session once Instinct uses the new token.</p>

@@ -27,52 +27,35 @@ export async function resolveAgent(token: string): Promise<Principal | null> {
   if (error || !isActiveGrant(data)) return null;
   return { buyerId: data!.buyer_id, kind: "agent" };
 }
-// Read-only check for the link page. Opening a link (or a chat app previewing
-// it) must not use up the token, so only redeemConnectionToken consumes it.
-export async function connectionTokenUsable(token: string) {
-  if (!validAgentToken(token) || !agentLinksConfigured()) return false;
-  const { data, error } = await supabaseAdmin()
-    .from("track_c_agent_links")
-    .select("expires_at,created_at")
-    .eq("token_hash", hashAgentToken(token))
-    .maybeSingle();
-  return !error && isActiveGrant(data, Date.now(), AGENT_CONNECT_SECONDS);
-}
-// Trades a one-time connection token for a new session token. Deleting the
-// token's row is what makes it single-use: when two requests race, only one
-// of them gets the row back. The new session replaces any earlier one.
+// Trades a one-time connection token for a new session token, which replaces
+// any earlier session. The database does both in one statement (see the
+// track_c_agent_sessions migration). With currentBuyerId set, only a token
+// for that same account is accepted.
 export async function redeemConnectionToken(
   token: string,
+  currentBuyerId?: string,
 ): Promise<{ token: string; expiresAt: string } | null> {
   if (!validAgentToken(token) || !agentLinksConfigured()) return null;
-  const now = Date.now();
-  const admin = supabaseAdmin();
-  const { data, error } = await admin
-    .from("track_c_agent_links")
-    .delete()
-    .eq("token_hash", hashAgentToken(token))
-    .gt("expires_at", new Date(now).toISOString())
-    .gt(
-      "created_at",
-      new Date(now - AGENT_CONNECT_SECONDS * 1000).toISOString(),
-    )
-    .select("buyer_id")
-    .maybeSingle();
-  if (error || !data) return null;
   const session = newAgentToken();
-  const expiresAt = new Date(now + AGENT_SESSION_SECONDS * 1000).toISOString();
-  const { error: sessionError } = await admin
+  const { data, error } = await supabaseAdmin()
+    .rpc("track_c_redeem_agent_token", {
+      p_token_hash: hashAgentToken(token),
+      p_session_hash: hashAgentToken(session),
+      p_connect_seconds: AGENT_CONNECT_SECONDS,
+      p_session_seconds: AGENT_SESSION_SECONDS,
+      p_current_buyer: currentBuyerId ?? null,
+    })
+    .maybeSingle<{ session_buyer_id: string; session_expires_at: string }>();
+  if (error || !data) return null;
+  return { token: session, expiresAt: data.session_expires_at };
+}
+// Lets an agent end its own session when it signs out.
+export async function endAgentSession(token: string) {
+  if (!validAgentToken(token) || !agentLinksConfigured()) return;
+  await supabaseAdmin()
     .from("track_c_agent_sessions")
-    .upsert(
-      {
-        buyer_id: data.buyer_id,
-        session_hash: hashAgentToken(session),
-        expires_at: expiresAt,
-        created_at: new Date(now).toISOString(),
-      },
-      { onConflict: "buyer_id" },
-    );
-  return sessionError ? null : { token: session, expiresAt };
+    .delete()
+    .eq("session_hash", hashAgentToken(token));
 }
 export async function getPrincipal(): Promise<Principal | null> {
   const token = (await cookies()).get(AGENT_COOKIE)?.value;

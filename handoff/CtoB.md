@@ -1,10 +1,10 @@
 # Track C to Track B
 
-## 2026-10-11 16:32 Agent orders wait for owner approval again
+## 2026-10-11 16:58 Agent orders wait for owner approval again
 
-- Eric asked for owner approval on every agent purchase again. Agent orders no longer call `checkoutBuyer` directly, so Track A's AtoB entry about that is out of date. Money moves only when the owner approves on `/account`, through `payApprovedRequest`, which calls `checkoutBuyer(..., { preFundedOnly: true })` as before.
+- Eric asked for owner approval on every agent purchase again. Agent orders no longer call `checkoutBuyer` directly. Track A's AtoB entry about that is out of date. Money moves only when the owner approves on `/account`, through `payApprovedRequest`, which calls `checkoutBuyer(..., { preFundedOnly: true })` as before.
 - Agents now connect once with a one-time token and keep a 90-day session. MCP clients trade the token for a session token at `POST /api/buyer/agent-session` and send that as the Bearer token.
-- New Track C migration `20261011232000_track_c_agent_sessions.sql`. It has to be on hosted Supabase before the branch merges.
+- New Track C migration `20261011232000_track_c_agent_sessions.sql`. It has to be on hosted Supabase before the branch merges. Boris has the steps in `CtoA.md`.
 
 ## 2026-10-11 14:45 Track C review of PR #1: good to merge from our side
 

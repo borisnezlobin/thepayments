@@ -1,55 +1,23 @@
-import { LogoMark } from "@/components/ui/Logo";
-import { Button } from "@/components/ui/Button";
-import { connectionTokenUsable } from "@/lib/buyer/auth";
-import { connectAgent } from "@/app/actions";
 import { StatusPanel } from "@/components/buyer/status-panel";
 export const metadata = {
   title: "Connect your agent",
   robots: { index: false, follow: false },
 };
-export default async function AgentLink({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
-  const { token } = await params;
-  if (!(await connectionTokenUsable(token)))
-    return (
-      <div className="page narrow">
-        <StatusPanel
-          title="This agent link is unavailable"
-          href="/login"
-          action="Sign in as the account owner"
-        >
-          <p>
-            It may have expired, been used already or been revoked. Ask the
-            account owner for a new link.
-          </p>
-        </StatusPanel>
-      </div>
-    );
+// Agent links are retired. A token in the URL path ended up in request logs,
+// browser history and chat link previews. This page never reads or uses it.
+export default function AgentLink() {
   return (
     <div className="page narrow">
-      <section className="connect-panel">
-        <span className="round-mark small-mark" aria-hidden="true">
-          <LogoMark className="size-10" />
-        </span>
-        <h1>Ready when you are.</h1>
-        <p className="lead">Connect to place pickup orders for this buyer.</p>
-        <ul className="permission-list">
-          <li>Browse shops and menus</li>
-          <li>Ask to place orders. The buyer approves each one.</li>
-          <li>No account settings or withdrawals</li>
-        </ul>
-        <p className="muted">
-          This link works once. After you connect, this browser stays signed in
-          for 90 days or until the buyer disconnects it.
+      <StatusPanel
+        title="Agent links no longer work"
+        href="/agents/connect"
+        action="Connect your agent"
+      >
+        <p>
+          Ask the account owner for an agent access token. Then paste it on the
+          Connect your agent page.
         </p>
-        <form action={connectAgent}>
-          <input type="hidden" name="token" value={token} />
-          <Button>Connect for ordering</Button>
-        </form>
-      </section>
+      </StatusPanel>
     </div>
   );
 }

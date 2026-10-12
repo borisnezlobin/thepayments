@@ -75,7 +75,7 @@ test("accounts show unavailable state and owner routes require sign-in", async (
   ).toBeDisabled();
   await page.goto("/agent/invalid");
   await expect(
-    page.getByRole("heading", { name: "This agent link is unavailable" }),
+    page.getByRole("heading", { name: "Agent links no longer work" }),
   ).toBeVisible();
 });
 test("MCP browser page and discovery file explain current capabilities", async ({

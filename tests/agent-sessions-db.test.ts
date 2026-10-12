@@ -30,11 +30,9 @@ beforeAll(async () => {
     ),
   );
   await database.exec(migration("_track_c_agent_links.sql"));
+  // Twice, because it may be pasted into the SQL editor before db push runs it.
   await database.exec(migration("_track_c_agent_sessions.sql"));
-  await database.query(
-    "insert into buyers (id, email) values ($1, $2), ($3, $4)",
-    [alice, "alice@example.test", bob, "bob@example.test"],
-  );
+  await database.exec(migration("_track_c_agent_sessions.sql"));
 }, 30_000);
 afterAll(async () => {
   await database?.close();
@@ -42,6 +40,10 @@ afterAll(async () => {
 beforeEach(async () => {
   await database.exec(
     "reset role; delete from track_c_agent_sessions; delete from track_c_agent_links;",
+  );
+  await database.query(
+    "insert into buyers (id, email) values ($1, $2), ($3, $4) on conflict (id) do nothing",
+    [alice, "alice@example.test", bob, "bob@example.test"],
   );
   await database.query(
     "insert into track_c_agent_sessions (buyer_id, session_hash, expires_at) values ($1, $2, now() + interval '90 days')",
@@ -59,7 +61,8 @@ async function asBuyer(id: string) {
     [id],
   );
 }
-const rows = async (sql: string) => (await database.query(sql)).rows;
+const rows = async (sql: string, params: unknown[] = []) =>
+  (await database.query(sql, params)).rows;
 describe("agent session migration on PostgreSQL", () => {
   it("lets owners see and end only their own session", async () => {
     await asBuyer(bob);
@@ -97,32 +100,64 @@ describe("agent session migration on PostgreSQL", () => {
       database.query("select * from track_c_agent_sessions"),
     ).rejects.toThrow();
   });
-  it("hands a connection token to only one redeemer", async () => {
-    await database.exec("set role service_role");
-    const redeem = () =>
-      rows(
-        `delete from track_c_agent_links where token_hash = '${tokenHash}'
-         and expires_at > now() and created_at > now() - interval '15 minutes'
-         returning buyer_id`,
-      );
-    expect(await redeem()).toEqual([{ buyer_id: alice }]);
-    expect(await redeem()).toEqual([]);
-  });
-  it("leaves an expired connection token unredeemable", async () => {
-    await database.query(
-      "update track_c_agent_links set created_at = now() - interval '16 minutes'",
-    );
-    await database.exec("set role service_role");
-    expect(
-      await rows(
-        `delete from track_c_agent_links where token_hash = '${tokenHash}'
-         and expires_at > now() and created_at > now() - interval '15 minutes'
-         returning buyer_id`,
-      ),
-    ).toEqual([]);
-  });
   it("removes the session when the buyer is deleted", async () => {
     await database.query("delete from buyers where id = $1", [alice]);
     expect(await rows("select * from track_c_agent_sessions")).toHaveLength(0);
+  });
+});
+describe("redeeming a connection token on PostgreSQL", () => {
+  const nextHash = "c".repeat(64);
+  const redeem = (currentBuyer: string | null = null) =>
+    rows(
+      "select * from public.track_c_redeem_agent_token($1, $2, 900, 7776000, $3::uuid)",
+      [tokenHash, nextHash, currentBuyer],
+    );
+  const sessions = () =>
+    rows(
+      "select buyer_id, session_hash, expires_at > now() + interval '89 days' as lasting from track_c_agent_sessions",
+    );
+  const links = () => rows("select buyer_id from track_c_agent_links");
+
+  it("works once and replaces the earlier session", async () => {
+    await database.exec("set role service_role");
+    expect(await redeem()).toEqual([
+      { session_buyer_id: alice, session_expires_at: expect.any(Date) },
+    ]);
+    expect(await redeem()).toEqual([]);
+    expect(await links()).toEqual([]);
+    expect(await sessions()).toEqual([
+      { buyer_id: alice, session_hash: nextHash, lasting: true },
+    ]);
+  });
+
+  it.each([
+    ["is older than 15 minutes", "created_at = now() - interval '16 minutes'"],
+    ["has expired", "expires_at = now() - interval '1 second'"],
+  ])("refuses a token that %s", async (_, change) => {
+    await database.exec(`update track_c_agent_links set ${change}`);
+    await database.exec("set role service_role");
+    expect(await redeem()).toEqual([]);
+    expect(await sessions()).toEqual([
+      { buyer_id: alice, session_hash: sessionHash, lasting: true },
+    ]);
+  });
+
+  it("keeps a connected agent on its own account", async () => {
+    await database.exec("set role service_role");
+    expect(await redeem(bob)).toEqual([]);
+    expect(await links()).toEqual([{ buyer_id: alice }]);
+    expect(await sessions()).toEqual([
+      { buyer_id: alice, session_hash: sessionHash, lasting: true },
+    ]);
+    expect(await redeem(alice)).toHaveLength(1);
+  });
+
+  it("can only be called by the server", async () => {
+    await asBuyer(alice);
+    await expect(redeem()).rejects.toThrow(/permission denied for function/);
+    await database.exec("reset role; set role anon");
+    await expect(redeem()).rejects.toThrow(/permission denied for function/);
+    await database.exec("reset role");
+    expect(await links()).toEqual([{ buyer_id: alice }]);
   });
 });

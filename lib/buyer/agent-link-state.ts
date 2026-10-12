@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { appOrigin, agentLinksConfigured } from "@/lib/config";
+import { agentLinksConfigured } from "@/lib/config";
 import { supabaseServer } from "@/lib/supabase/server";
 import { AGENT_CONNECT_SECONDS, hashAgentToken, isActiveGrant } from "./tokens";
 // What the account page shows about the owner's agent: whether a session is
@@ -11,7 +11,6 @@ export async function agentLinkState(buyerId: string) {
       available: false,
       active: false,
       expiresAt: null,
-      newLink: null,
       newToken: null,
       newTokenExpiresAt: null,
     };
@@ -36,12 +35,10 @@ export async function agentLinkState(buyerId: string) {
     link.data?.token_hash === hashAgentToken(token)
       ? token
       : null;
-  const newLink = newToken ? `${appOrigin()}/agent/${newToken}` : null;
   return {
     available: !session.error && !link.error,
     active,
     expiresAt: active ? (session.data?.expires_at ?? null) : null,
-    newLink,
     newToken,
     newTokenExpiresAt: newToken ? (link.data?.expires_at ?? null) : null,
   };

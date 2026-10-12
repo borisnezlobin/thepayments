@@ -10,13 +10,13 @@ Track A already filters unavailable products and unpublished shops. We display i
 
 Supabase Auth owns email/password credentials. After a verified signup, login, or email confirmation, `ensureBuyer` inserts a shared `buyers` row with `id = auth.users.id`, without creating a wallet. Existing rows/wallets are not overwritten. An email conflict with a differently identified preexisting buyer fails rather than silently linking identities.
 
-The additive migration introduces only `track_c_agent_links`, referencing the existing `buyers` table. Authenticated owners access their own row via RLS (`auth.uid() = buyer_id`). The server-only Supabase secret resolves token hashes for agent sessions. Raw credentials are never stored in the table. A replacement link atomically replaces the hash; revoke deletes it.
+The additive migration introduces only `track_c_agent_links`, referencing the existing `buyers` table. Authenticated owners access their own row via RLS (`auth.uid() = buyer_id`). The server-only Supabase secret resolves token hashes for agent sessions. Raw credentials are never stored in the table. A replacement link atomically replaces the hash; revoke deletes it. A later migration adds `track_c_agent_sessions`, which holds the hash of each agent's 90-day session token, and `track_c_redeem_agent_token`, which uses up a connection token and starts the session in one statement.
 
 The team's minimal local stack excludes Auth. See TRACK_C.md for the account-test startup command. No new password column is needed. Production Supabase signup rate limits apply; no custom password storage is implemented.
 
 ## Agent orders wait for the buyer's approval
 
-Agents never pay by themselves. When an agent session (browser cookie from the agent link, or the agent link token as an MCP Bearer token) places an order, `lib/buyer/approvals.ts` prices it from the live menu, checks `expectedTotalCents`, and stores it in `track_c_order_requests` as `pending` for 30 minutes. The same buyer and idempotency key always return the same request.
+Agents never pay by themselves. When an agent session (the browser cookie set at `/agents/connect`, or the session token as an MCP Bearer token) places an order, `lib/buyer/approvals.ts` prices it from the live menu, checks `expectedTotalCents`, and stores it in `track_c_order_requests` as `pending` for 30 minutes. The same buyer and idempotency key always return the same request.
 
 The signed-in owner sees pending requests on `/account` and approves or declines each one. Approval moves the row from `pending` to `approved` with a conditional update, so a double tap or a second device cannot pay twice. Only then is `payApprovedRequest` in `lib/buyer/payment.ts` called. A browser agent is redirected to `/requests/:id`, which shows the request's state.
 
@@ -50,7 +50,7 @@ Before enabling checkout:
 
 ## MCP authorization before payments
 
-`find_shops` and `get_menu` are public reads. `place_order` requires the buyer's agent link token as a Bearer token, resolved through the same expiry and revocation rules as the browser. It only creates an approval request and returns `awaiting_approval`. It cannot spend.
+`find_shops` and `get_menu` are public reads. `place_order` requires the agent's session token as a Bearer token. MCP clients get one by posting the connection token to `POST /api/buyer/agent-session`. It follows the same expiry and Disconnect rules as the browser. It only creates an approval request and returns `awaiting_approval`. It cannot spend.
 
 Before any MCP path pays from a wallet, keep the owner approval step in front of it, and add limits. Never expose a funded shared wallet to anonymous callers. This version accepts no MCP private key and implements no OAuth authorization server.
 

@@ -8,9 +8,9 @@ This work follows the team README, AGENTS.md, shared `lib/contract.ts`, shared p
 - `/shops` and `/s/:slug` consume `ShopSummary[]` and `ShopMenu` exactly as Track A supplies them. Menus use Track A's `agentPriceCents`, with integer-cent totals formatted by `lib/pricing.ts`.
 - Catalog reads call `listLiveShops` and `getLiveMenu` directly by default. For separate deployments, `CATALOG_API_ORIGIN` enables the equivalent HTTP endpoints. No catalog data is seeded or invented.
 - Email/password signup, confirmation, login, logout, and verified `buyers` profile provisioning through Supabase Auth. Passwords belong to Supabase Auth, so no password column is added to `buyers`. A verified user's UUID becomes `buyers.id`; the existing wallet address is preserved.
-- Random 256-bit private agent links with 30-day expiration, rotation, and revocation. Only SHA-256 hashes are stored. Agents cannot access account management or generate new links. Revocation invalidates the link and existing agent cookies on the next request.
+- Agents connect once with a random 256-bit connection token that works one time within 15 minutes. Redeeming it at `/agents/connect`, or at `POST /api/buyer/agent-session` for MCP clients, gives the agent its own 90-day session token. Disconnect on `/account` ends the session on the agent's next request. Only SHA-256 hashes of both tokens are stored. Agents cannot open account management, approve orders or make new tokens.
 - `/agents`, `/llms.txt`, JSON menu discovery links, and `/mcp` Streamable HTTP. A browser opening `/mcp` is directed to the styled connection instructions.
-- Public MCP `find_shops` and `get_menu` tools. `place_order` needs the agent link token as a Bearer token and returns `awaiting_approval`, never a paid result.
+- Public MCP `find_shops` and `get_menu` tools. `place_order` needs the agent session token as a Bearer token and returns `awaiting_approval`, never a paid result.
 - Every agent order waits for the buyer. Pending requests appear on `/account` with Approve and Decline. The new `*_track_c_order_approvals.sql` migration is additive.
 
 ## Intentionally waiting for Track B
@@ -53,12 +53,12 @@ The PKCE callback is also supported. For local confirmation tests, update `supab
 ### Agent flow
 
 1. Sign up, confirm if required, and sign in.
-2. Open `/account`, create a private agent link, and copy it within two minutes.
-3. Open it in a separate browser profile and choose **Connect for ordering**.
-4. Browse shops. Account management is blocked for that session.
-5. Revoke the link from the owner's profile. The next agent request loses access.
+2. Open `/account`, choose **Connect Instinct**, and copy the agent access token. It works once within 15 minutes.
+3. In a separate browser profile, open `/agents/connect` and paste the token.
+4. Browse shops. Account management is blocked for that session. Each order waits on `/account` for the owner's approval.
+5. Choose **Disconnect** in the owner's profile. The agent's next request loses access.
 
-Capability URL paths should be redacted in deployment access logs. Track C adds no analytics and sets no-referrer/no-store headers for sensitive routes.
+Tokens travel only in form bodies, cookies and Bearer headers, never in URLs. Track C adds no analytics and sets no-store headers for sensitive routes.
 
 ## Validation
 
