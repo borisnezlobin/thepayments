@@ -34,4 +34,20 @@ describe("Track A consumer", () => {
     expect(await getMenu("../admin")).toBeNull();
     expect(fetch).not.toHaveBeenCalled();
   });
+  it("keeps the directory and menu available for existing trailing-hyphen shop URLs", async () => {
+    const legacy = {
+      ...shop,
+      slug: "raleigh-s-pub-mezzo-2438-2442-telegraph-",
+    };
+    vi.stubEnv("CATALOG_API_ORIGIN", "https://catalog.example");
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(Response.json([legacy, shop]))
+        .mockResolvedValueOnce(Response.json({ ...menu, shop: legacy })),
+    );
+    expect(await findShops()).toEqual([legacy, shop]);
+    expect((await getMenu(legacy.slug))?.shop.slug).toBe(legacy.slug);
+  });
 });
