@@ -3,6 +3,7 @@ import Link from "next/link";
 import { findShops } from "@/lib/catalog";
 import { CatalogError, IntegrationUnavailable } from "@/lib/errors";
 import { ShopPhoto } from "./ShopPhoto";
+import { ShopGalleryRail } from "./ShopGalleryRail";
 
 export function ShopGalleryHeading() {
   return (
@@ -29,7 +30,7 @@ export async function FeaturedShops() {
   await connection();
   let shops;
   try {
-    shops = (await findShops()).slice(0, 4);
+    shops = await findShops();
   } catch (error) {
     if (
       !(
@@ -50,21 +51,24 @@ export async function FeaturedShops() {
       </p>
     );
   return (
-    <div className="flex flex-col gap-8 sm:flex-row sm:flex-wrap">
+    <ShopGalleryRail>
       {shops.map((shop) => (
         <Link
           key={shop.slug}
           href={`/s/${shop.slug}`}
-          className="group flex min-w-0 flex-1 flex-col gap-4 text-ink no-underline sm:basis-96"
+          className="group flex w-72 shrink-0 snap-start flex-col gap-4 text-ink no-underline sm:w-80"
         >
           <ShopPhoto
             slug={shop.slug}
             name={shop.name}
             className="aspect-video w-full rounded-card"
-            sizes="(max-width: 640px) 100vw, (max-width: 1152px) 50vw, 552px"
+            sizes="(max-width: 640px) 288px, 320px"
           />
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-title font-semibold group-hover:underline underline-offset-4">
+            <h3
+              title={shop.name}
+              className="line-clamp-2 text-title font-semibold group-hover:underline underline-offset-4"
+            >
               {shop.name}
             </h3>
             <span className="shrink-0 rounded-pill bg-accent-wash px-3 py-1.5 text-body-sm font-semibold text-accent-ink">
@@ -74,6 +78,6 @@ export async function FeaturedShops() {
           <span className="text-body-sm text-ink-muted">View menu</span>
         </Link>
       ))}
-    </div>
+    </ShopGalleryRail>
   );
 }
