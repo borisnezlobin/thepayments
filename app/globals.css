@@ -15,6 +15,8 @@
   --font-display: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-cooper-hewitt), ui-sans-serif, system-ui, sans-serif;
 
+  --text-poster: clamp(2.5rem, 11vw, 12rem);
+  --text-poster--line-height: 0.92;
   --text-display-xl: 4.5rem;
   --text-display-xl--line-height: 1.02;
   --text-display: 2.75rem;
@@ -49,6 +51,9 @@
 
   --animate-ticket-in: ticket-in 520ms var(--ease-out-soft) both;
   --animate-pulse-ring: pulse-ring 1600ms var(--ease-out-soft) infinite;
+  --animate-slide-in: slide-in 600ms var(--ease-out-soft) both;
+  --animate-bar-grow: bar-grow 900ms var(--ease-out-soft) both;
+  --animate-fade-in: fade-in 500ms var(--ease-out-soft) both;
 
   @keyframes ticket-in {
     from {
@@ -58,6 +63,35 @@
     to {
       opacity: 1;
       translate: 0 0;
+    }
+  }
+
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      translate: 0 16px;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes bar-grow {
+    from {
+      scale: 1 0;
+    }
+    to {
+      scale: 1 1;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
     }
   }
 

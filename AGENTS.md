@@ -33,7 +33,7 @@ Three teammates build in parallel, each with their own coding agent. Track A is 
 
 | Path | Owner |
 | --- | --- |
-| `app/page.tsx`, `app/m/**`, `app/api/shops/import`, `app/api/shops/route.ts`, `app/api/shops/[slug]/route.ts`, `app/api/shops/[slug]/menu`, `app/api/shops/[slug]/inbox/**`, `lib/shops/**`, `components/merchant/**` | A |
+| `app/page.tsx`, `app/present/**`, `components/present/**`, `app/m/**`, `app/api/shops/import`, `app/api/shops/route.ts`, `app/api/shops/[slug]/route.ts`, `app/api/shops/[slug]/menu`, `app/api/shops/[slug]/inbox/**`, `lib/shops/**`, `components/merchant/**` | A |
 | `lib/payments/**`, `app/api/shops/[slug]/orders/**`, `app/api/orders/**`, `app/api/shops/[slug]/balance`, `app/api/shops/[slug]/withdraw` | B |
 | `app/s/**`, `app/shops/**`, `app/account/**`, `app/mcp/**`, `app/api/buyer/**`, `components/buyer/**` | C |
 | `lib/contract.ts`, `lib/db/**`, `lib/pricing.ts`, `components/ui/**`, `app/globals.css`, `app/layout.tsx`, `supabase/migrations/**` | Shared |
