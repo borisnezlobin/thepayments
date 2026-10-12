@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import { HeroCard } from "@/components/merchant/hero/HeroCard";
 import { Logo } from "@/components/ui/Logo";
-import { cardFeeCents } from "@/lib/pricing";
+import { CentGrid, CentLegend } from "./CentGrid";
+import { COFFEE } from "./coffeeMath";
 import { PriceBars } from "./PriceBars";
 
-const CORTADO_CENTS = 550;
 const SITE = "thepayments.vercel.app";
 
 function SlideFrame({ children, className = "" }: { children: ReactNode; className?: string }) {
@@ -25,13 +25,14 @@ function TitleSlide() {
 }
 
 function ProblemSlide() {
-  const feeCents = cardFeeCents(CORTADO_CENTS, "stripeOnline");
   return (
-    <SlideFrame>
-      <h2 className="flex flex-col gap-6">
-        <span className="tabular text-poster font-bold text-danger">{feeCents}¢</span>
-        <span className="max-w-4xl text-title font-bold md:text-display">of every $5.50 coffee ordered online goes to Stripe before the shop sees it.</span>
-      </h2>
+    <SlideFrame className="gap-10">
+      <h2 className="max-w-5xl text-display font-bold md:text-display-xl">Stripe takes almost as much from a $5.50 coffee as the café keeps.</h2>
+      <CentGrid />
+      <CentLegend />
+      <p className="text-body-sm text-ink-muted">
+        Each dot is 1¢. BizBuySell puts the average US coffee shop&rsquo;s 2021 profit at {COFFEE.cafeProfitPct}% of sales.
+      </p>
     </SlideFrame>
   );
 }
@@ -46,10 +47,8 @@ function PitchSlide() {
 
 function BarsSlide() {
   return (
-    <SlideFrame className="py-10">
-      <div className="min-h-0 flex-1">
-        <PriceBars />
-      </div>
+    <SlideFrame>
+      <PriceBars />
     </SlideFrame>
   );
 }
