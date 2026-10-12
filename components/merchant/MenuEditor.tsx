@@ -76,7 +76,7 @@ function SaveControls({ live, state, items, shopName, onSave }: { live: boolean;
           Save without publishing
         </Button>
       )}
-      <p role="status" className={`min-h-5 text-body-sm ${state.phase === "failed" || problemCount > 0 ? "text-danger" : "text-ink-muted"}`}>
+      <p role="status" className={`min-h-5 text-body-sm ${state.phase === "failed" || !orderable ? "text-danger" : "text-ink-muted"}`}>
         {statusText(state, problemCount, orderable)}
       </p>
     </div>
