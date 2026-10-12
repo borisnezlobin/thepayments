@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { handle, readJson } from "@/lib/http";
+import { handle, HttpError, readJson } from "@/lib/http";
 import { requireShopOwner } from "@/lib/shops/auth";
 import { listProducts, publishShop, saveProductEdits, updateShopDetails } from "@/lib/shops/repository";
 
@@ -25,6 +25,17 @@ export function PATCH(request: Request, context: RouteContext<"/api/shops/[slug]
   return handle(async () => {
     const owner = await requireShopOwner(request, (await context.params).slug);
     const changes = await readJson(request, updateSchema);
+    if (changes.publish || owner.status === "live") {
+      const existing = await listProducts(owner.id);
+      const edits = new Map(changes.products?.map((product) => [product.id, product]));
+      const readyProducts = existing.map((product) => {
+        const edit = edits.get(product.id) ?? product;
+        return { ...edit, available: edit.available && edit.priceCents > 0 && (!edit.baseName || Boolean(edit.sizeLabel?.trim())) };
+      });
+      if (changes.publish && !readyProducts.some((product) => product.available))
+        throw new HttpError(400, "Add a priced item with named sizes, or keep the shop as a draft.");
+      changes.products = readyProducts;
+    }
     if (changes.products) await saveProductEdits(owner.id, changes.products);
     let shop = await updateShopDetails(owner, changes);
     if (changes.publish) shop = await publishShop(shop);
