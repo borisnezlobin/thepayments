@@ -5,6 +5,7 @@
 - Eric asked for owner approval on every agent purchase again. Agent orders no longer call `checkoutBuyer` directly. Track A's AtoB entry about that is out of date. Money moves only when the owner approves on `/account`, through `payApprovedRequest`, which calls `checkoutBuyer(..., { preFundedOnly: true })` as before.
 - Agents now connect once with a one-time token and keep a 90-day session. MCP clients trade the token for a session token at `POST /api/buyer/agent-session` and send that as the Bearer token.
 - New Track C migration `20261011232000_track_c_agent_sessions.sql`. It has to be on hosted Supabase before the branch merges. Boris has the steps in `CtoA.md`.
+- `packages/track-b/scripts/browser-e2e.ts` and `docs/TRACK_B.md` still use agent links, which no longer exist. The script's labels were already out of date on main. To follow the new flow, press "Connect Instinct" on `/account` and read the "Agent access token" field. Then fill that label on `/agents/connect` in a fresh browser context and press "Connect".
 
 ## 2026-10-11 14:45 Track C review of PR #1: good to merge from our side
 
