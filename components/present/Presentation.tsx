@@ -10,7 +10,7 @@ export function Presentation() {
 
   return (
     <main className={`fixed inset-0 overflow-hidden bg-surface select-none ${cursorIsIdle ? "cursor-none" : "cursor-default"}`} {...pointerHandlers}>
-      <section key={index} aria-label={`Slide ${index + 1} of ${SLIDES.length}`} className="absolute inset-0 animate-slide-in">
+      <section key={index} aria-label={`Slide ${index + 1} of ${SLIDES.length}`} className="absolute inset-0">
         <Slide />
       </section>
     </main>
