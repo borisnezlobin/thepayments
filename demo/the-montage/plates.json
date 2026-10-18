@@ -1,0 +1,197 @@
+{
+  "fps": 30,
+  "size": [
+    1920,
+    1080
+  ],
+  "plates": [
+    {
+      "file": "01-declaration.jpg",
+      "left": [
+        153,
+        574
+      ],
+      "right": [
+        462,
+        574
+      ],
+      "frames": 12
+    },
+    {
+      "file": "02-oz.jpg",
+      "left": [
+        214,
+        395
+      ],
+      "right": [
+        676,
+        396
+      ],
+      "frames": 8
+    },
+    {
+      "file": "03-sun-1912.jpg",
+      "left": [
+        749,
+        281
+      ],
+      "right": [
+        1050,
+        281
+      ],
+      "frames": 6
+    },
+    {
+      "file": "04-evening-world-1912.jpg",
+      "left": [
+        898,
+        684
+      ],
+      "right": [
+        1186,
+        684
+      ],
+      "frames": 6
+    },
+    {
+      "file": "05-ogden-1918.jpg",
+      "left": [
+        856,
+        525
+      ],
+      "right": [
+        1125,
+        525
+      ],
+      "frames": 4
+    },
+    {
+      "file": "06-nyt-1918.jpg",
+      "left": [
+        740,
+        331
+      ],
+      "right": [
+        1008,
+        331
+      ],
+      "frames": 4
+    },
+    {
+      "file": "07-phantom-1925.jpg",
+      "left": [
+        184,
+        440
+      ],
+      "right": [
+        432,
+        440
+      ],
+      "frames": 4
+    },
+    {
+      "file": "08-gatsby-1925.jpg",
+      "left": [
+        157,
+        194
+      ],
+      "right": [
+        450,
+        194
+      ],
+      "frames": 4
+    },
+    {
+      "file": "09-jazz-singer-1927.jpg",
+      "left": [
+        50,
+        300
+      ],
+      "right": [
+        245,
+        300
+      ],
+      "frames": 2
+    },
+    {
+      "file": "10-docks-1928.jpg",
+      "left": [
+        106,
+        388
+      ],
+      "right": [
+        349,
+        388
+      ],
+      "frames": 2
+    },
+    {
+      "file": "11-nyt-building.jpg",
+      "left": [
+        177,
+        2675
+      ],
+      "right": [
+        950,
+        2660
+      ],
+      "frames": 2,
+      "mode": "shear"
+    },
+    {
+      "file": "12-economist.jpg",
+      "left": [
+        1470,
+        1095
+      ],
+      "right": [
+        1688,
+        1058
+      ],
+      "frames": 2
+    },
+    {
+      "file": "13-coffee-bean.jpg",
+      "left": [
+        2760,
+        430
+      ],
+      "right": [
+        3431,
+        430
+      ],
+      "frames": 2
+    },
+    {
+      "file": "14-ups-store.jpg",
+      "left": [
+        1009,
+        488
+      ],
+      "right": [
+        1653,
+        490
+      ],
+      "frames": 2
+    },
+    {
+      "file": "15-embarcadero.jpg",
+      "left": [
+        299,
+        2245
+      ],
+      "right": [
+        559,
+        2070
+      ],
+      "frames": 2,
+      "mode": "shear"
+    }
+  ],
+  "endCard": {
+    "logoWidth": 1440,
+    "theAloneFrames": 8,
+    "holdFrames": 120,
+    "slogan": "To power all of the payments in the world"
+  }
+}
